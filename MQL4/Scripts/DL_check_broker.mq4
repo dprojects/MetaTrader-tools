@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------------------------------------------------------------
 
-   2020, This tool has been made to check broker slips (cheats) or confirm the broker is honest (yes this can happen)
+   2020, This tool shows SL, TP and Open price slips made by broker.  
 
    -------------------------------------------------------------------------------------------------------------------- */
 
@@ -224,62 +224,71 @@ void OnStart()
    );
    
 
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vAll + sCSV, 
+   PrintFormat("%s %s %-6s %s %s",
+                  sCol, sCSV, 
+                  (string)vAll, sCSV, 
                   "All orders (realized except cancelled and pending)"
    );
+   
    if (extFormat) {
-      PrintFormat(" %-10s %s ",
-                     sCol + sCSV + 
-                     (string)vO + sCSV, 
+      
+      PrintFormat("%s %s %-6s %s %s",
+                     sCol, sCSV, 
+                     (string)vO, sCSV, 
                      "Orders opened by broker with different open price"
       );
    }
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vNotSet + sCSV, 
+   
+   PrintFormat("%s %s %-6s %s %s",
+                  sCol, sCSV, 
+                  (string)vNotSet, sCSV, 
                   "Orders without set StopLoss or TakeProfit"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vSet + sCSV, 
+   PrintFormat("%s %s %-6s %s %s",
+                  sCol, sCSV, 
+                  (string)vSet, sCSV, 
                   "Orders with set StopLoss or TakeProfit"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vEqSLME + sCSV, 
-                  "Good job" + sCSV + "Orders closed by trader before StopLoss activation (cut loss)"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vEqSLME, sCSV, 
+                  "Good job", sCSV, 
+                   "Orders closed by trader before StopLoss activation (cut loss)"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vEqTPME + sCSV, 
-                  "Bad strategy" + sCSV + "Orders closed by trader before TakeProfit activation (cut profit)"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vEqTPME, sCSV, 
+                  "Bad strategy", sCSV, 
+                  "Orders closed by trader before TakeProfit activation (cut profit)"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)(vE + vL + vEqTP + vEqSL) + sCSV, 
+   PrintFormat("%s %s %-6s %s %s",
+                  sCol, sCSV, 
+                  (string)(vE + vL + vEqTP + vEqSL), sCSV, 
                   "All orders closed by broker with set StopLoss or TakeProfit"            
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vEqSL + sCSV, 
-                  "Good broker" + sCSV + "Orders closed by broker with StopLoss expected by trader"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vEqSL, sCSV, 
+                  "Good broker", sCSV, 
+                  "Orders closed by broker with StopLoss expected by trader"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vEqTP + sCSV, 
-                  "Good broker" + sCSV + "Orders closed by broker with TakeProfit expected by trader"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vEqTP, sCSV, 
+                  "Good broker", sCSV, 
+                  "Orders closed by broker with TakeProfit expected by trader"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vL + sCSV, 
-                  "Bad broker" + sCSV + "Orders closed by broker with bigger StopLoss (worse for trader)"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vL, sCSV, 
+                  "Bad broker", sCSV, 
+                  "Orders closed by broker with bigger StopLoss (worse for trader)"
    );
-   PrintFormat(" %-10s %s ",
-                  sCol + sCSV + 
-                  (string)vE + sCSV, 
-                  "Good broker" + sCSV + "Orders closed by broker with bigger TakeProfit (better for trader)"
+   PrintFormat("%s %s %-6s %s %s %s %s",
+                  sCol, sCSV, 
+                  (string)vE, sCSV, 
+                  "Good broker", sCSV, 
+                  "Orders closed by broker with bigger TakeProfit (better for trader)"
    );
    
    Print(   sCol +
