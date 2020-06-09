@@ -1,6 +1,10 @@
 # Description
 
-This tool has been made to check broker slips (cheats) or confirm the broker is honest (yes this can happen).
+Tools for Meta Trader.
+
+# Available tools:
+
+- [DL_check_broker.mq4](https://github.com/dprojects/MetaTrader-tools/blob/master/MQL4/Scripts/DL_check_broker.mq4) - shows SL, TP, open price slips from your orders history.
 
 # Install:
 
