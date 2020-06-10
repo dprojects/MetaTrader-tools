@@ -21,16 +21,16 @@ void OnStart()
    int    print = 0;
    double vE = 0, vEqSL = 0, vEqSLME = 0, vSetSL = 0;
    double vL = 0, vEqTP = 0, vEqTPME = 0, vSetTP = 0;
-   double vAll = 0, vSet = 0, vNotSet = 0, vO = 0;
+   double vAll = 0, vSet = 0, vNotSet = 0, vO = 0, vCb = 0, vRg = 0;
    string vType = "", t1 = "", t2 = "", t3 = "";
-   string k = "", kExt[];
+   string k = "", kExt[], result = "";
    
    // This is extended part to show incorrect broker open price (open slip).
    // But first for each order you have to set exact comment format
    // e.g. like this: ";requestopenprice;slippage;sliptry;pointvalue;ordertype;"
    // The comment format can be only "";requestopenprice;" but open price must be 
    // 2nd from the left. This need to have ";" separator on each side for broker add.
-   bool   extFormat = true;
+   bool extFormat = true;
 
    // separators
    //string sCSV = ";"; // for CSV converters
@@ -217,6 +217,20 @@ void OnStart()
                "Profit", sCSV
    );
 
+   // calculate final result
+
+   vCb = vE + vL + vEqTP + vEqSL;
+   vRg = ( (vE + vEqTP + vEqSL) / vCb ) * 100;
+
+   if (vRg > 80) { result = "VERY GOOD"; } 
+   else if (vRg > 50) { result = "GOOD"; }
+   else if (vRg > 20) { result = "BAD"; }
+   else if (vRg > 20) { result = "VERY BAD"; }
+
+   result += "   ( " + DoubleToStr(vRg, 0) + "% ) ";
+ 
+   // print final result
+
    Print(   sCol +
             "--------------------------------------------------------------------------------" +
             "--------------------------------------------------------------------------------" +
@@ -263,7 +277,7 @@ void OnStart()
    );
    PrintFormat("%s %s %-6s %s %s",
                   sCol, sCSV, 
-                  (string)(vE + vL + vEqTP + vEqSL), sCSV, 
+                  (string)vCb, sCSV, 
                   "All orders closed by broker with set StopLoss or TakeProfit"            
    );
    PrintFormat("%s %s %-6s %s %s %s %s",
@@ -295,5 +309,11 @@ void OnStart()
             "--------------------------------------------------------------------------------" +
             "--------------------------------------------------------------------------------" +
             "--------------------------------------------------------------------------------"
+   );
+
+   PrintFormat("%s %s %s %s",
+                  sCol, sCSV, 
+                  "Final result for Broker: ",
+                  result
    );
 }
