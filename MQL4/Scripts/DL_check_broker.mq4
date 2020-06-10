@@ -225,7 +225,7 @@ void OnStart()
    if (vRg > 80) { result = "VERY GOOD"; } 
    else if (vRg > 50) { result = "GOOD"; }
    else if (vRg > 20) { result = "BAD"; }
-   else if (vRg > 20) { result = "VERY BAD"; }
+   else { result = "VERY BAD"; }
 
    result += "   ( " + DoubleToStr(vRg, 0) + "% ) ";
  
