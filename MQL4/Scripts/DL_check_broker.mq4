@@ -31,15 +31,15 @@ string sLine = sCol +
 // GLOBALS
 // -----------------------------------------------------------------------------------------------------------------------
 
-bool   gOpen = false;
 int    gShow = 0;
-double gE = 0, gEqSL = 0, gEqSLME = 0, gSetSL = 0, gEQuick = 0;
-double gL = 0, gEqTP = 0, gEqTPME = 0, gSetTP = 0, gLQuick = 0;
-double gActivated = 0, gSet = 0, gNotSet = 0, gO = 0, gCb = 0, gRg = 0;
-double gPoint = 0;
+bool   gHasOpen = false;
+double gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gQuickEarn = 0;
+double gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0;
+double gActivated = 0, gSet = 0, gNotSet = 0, gOpenSlip = 0, gBrokerClosed = 0;
+double gPoint = 0, gRg = 0;
 string gHTML = "", gHTMLe = "";
 string gIssue = "";
-string vSum[40];
+string vSum[46];
 
 // -----------------------------------------------------------------------------------------------------------------------
 // Set final summary
@@ -51,10 +51,11 @@ void setSummary()
 
    // calculate
 
-   gCb = gE + gL + gEqTP + gEqSL;
-   gRg = ( (gE + gEqTP + gEqSL) / gCb ) * 100;
+   gBrokerClosed = gBiggerTP + gBiggerSL + gCutTPB + gCutSLB + gTPEqual + gSLEqual;
+   gRg = ( (gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / gBrokerClosed ) * 100;
 
-   if (gRg > 80) { result = "VERY GOOD"; } 
+   if (gRg == 100) { result = "DEMO ?"; } 
+   else if (gRg > 80) { result = "VERY GOOD"; } 
    else if (gRg > 50) { result = "GOOD"; }
    else if (gRg > 20) { result = "BAD"; }
    else { result = "VERY BAD"; }
@@ -65,67 +66,75 @@ void setSummary()
    
    vSum[0] = "Final result for Broker: "+result;
    
-   vSum[1] = (string)gE;
+   vSum[1] = (string)gBiggerTP;
    vSum[2] = "(good broker)";
-   vSum[3] = "Orders closed by broker with bigger TakeProfit (better for trader)";
+   vSum[3] = "Orders closed by broker with bigger TakeProfit";
    
-   vSum[4] = (string)gL;
-   vSum[5] = "(bad broker)";
-   vSum[6] = "Orders closed by broker with bigger StopLoss (worse for trader)";
+   vSum[4] = (string)gCutSLB;
+   vSum[5] = "(good broker)";
+   vSum[6] = "Orders closed by broker with smaller StopLoss";
 
-   vSum[7] = (string)gEqTP;
+   vSum[7] = (string)gTPEqual;
    vSum[8] = "(good broker)";
    vSum[9] = "Orders closed by broker with TakeProfit expected by trader";
 
-   vSum[10] = (string)gEqSL;
+   vSum[10] = (string)gSLEqual;
    vSum[11] = "(good broker)";
    vSum[12] = "Orders closed by broker with StopLoss expected by trader";
 
-   vSum[13] = (string)gCb;
-   vSum[14] = "(secure strategy)";
-   vSum[15] = "All orders with set StopLoss or TakeProfit closed by broker";
+   vSum[13] = (string)gBiggerSL;
+   vSum[14] = "(bad broker)";
+   vSum[15] = "Orders closed by broker with bigger StopLoss";
 
-   vSum[16] = (string)gEqTPME;
-   vSum[17] = "(bad strategy)";
-   vSum[18] = "Orders closed by trader before TakeProfit activation (cut profit)";
+   vSum[16] = (string)gCutTPB;
+   vSum[17] = "(bad broker)";
+   vSum[18] = "Orders closed by broker with smaller TakeProfit";
+   
+   vSum[19] = (string)gBrokerClosed;
+   vSum[20] = "(secure strategy)";
+   vSum[21] = "All orders closed by broker with set StopLoss or TakeProfit";
 
-   vSum[19] = (string)gEqSLME;
-   vSum[20] = "(good strategy)";
-   vSum[21] = "Orders closed by trader before StopLoss activation (cut loss)";
+   vSum[22] = (string)gCutSLT;
+   vSum[23] = "(good strategy)";
+   vSum[24] = "Orders closed by trader before StopLoss activation (cut loss)";
 
-   vSum[22] = (string)gSet;
-   vSum[23] = "";
-   vSum[24] = "Orders with set StopLoss or TakeProfit";
+   vSum[25] = (string)gCutTPT;
+   vSum[26] = "(bad strategy)";
+   vSum[27] = "Orders closed by trader before TakeProfit activation (cut profit)";
+   
+   vSum[28] = (string)gQuickEarn;
+   vSum[29] = "(good for scalpers & robots)";
+   vSum[30] = "Quick orders with earn (profit > 0)";
 
-   vSum[25] = (string)gNotSet;
-   vSum[26] = "(risky strategy)";
-   vSum[27] = "Orders without set StopLoss or TakeProfit";
-
-   if (gOpen) 
+   vSum[31] = (string)gQuickLoss;
+   vSum[32] = "(not good for scalpers & robots)";
+   vSum[33] = "Quick orders with loss (profit < 0)";
+  
+   if (gHasOpen) 
    {
-      vSum[28] = (string)gO;
-      vSum[29] = "(not very liquid market)";
-      vSum[30] = "Orders opened by broker with different open price";
+      vSum[34] = (string)gOpenSlip;
+      vSum[35] = "(not very liquid market)";
+      vSum[36] = "Orders opened by broker with different open price";
    }
    else
    {
-      vSum[28] = "-";
-      vSum[29] = "";
-      vSum[30] = "To use open price slips feature you need to have for each order exact ";
-      vSum[30] += "comment format e.g. ;requested_open_price; to compare with OrderOpenPrice() later.";
+      vSum[34] = "-";
+      vSum[35] = "";
+      vSum[36] = "To use open price slips feature you need to have for each order exact ";
+      vSum[36] += "comment format e.g. ;requested_open_price; to compare with OrderOpenPrice() later.";
    }
-
-   vSum[31] = (string)gEQuick;
-   vSum[32] = "(good for scalpers & robots)";
-   vSum[33] = "Quick orders with earn (profit > 0)";
-
-   vSum[34] = (string)gLQuick;
-   vSum[35] = "(not good for scalpers & robots)";
-   vSum[36] = "Quick orders with loss (profit < 0)";
-
-   vSum[37] = (string)gActivated;
+   
+   vSum[37] = (string)gSet;
    vSum[38] = "";
-   vSum[39] = "All orders (realized except cancelled and pending)";
+   vSum[39] = "All orders with set StopLoss or TakeProfit";
+
+   vSum[40] = (string)gNotSet;
+   vSum[41] = "(risky strategy)";
+   vSum[42] = "All orders without set StopLoss or TakeProfit";
+
+   vSum[43] = (string)gActivated;
+   vSum[44] = "";
+   vSum[45] = "All orders (realized except cancelled and pending)";
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -170,7 +179,7 @@ void showSummary()
 
    Print(sLine);
 
-   for (int i=39; i>0; i-=3)
+   for (int i=45; i>0; i-=3)
    {
       PrintFormat("%s %s %s %s %s %s %s", sCol, sCSV, vSum[i-2], sCSV, vSum[i-1], sCSV, vSum[i] );
    }
@@ -224,21 +233,21 @@ void setEntry()
          "%s %s " + 
          "%s" + 
          "",
-         sCol, sCSV, 
-         (string)OrderSymbol(), sCSV, 
-         (string)OrderTicket(), sCSV, 
-         (string)OrderOpenTime(), sCSV, 
-         (string)OrderCloseTime(), sCSV, 
-         (string)OrderOpenPrice(), sCSV, 
-         (string)OrderClosePrice(), sCSV, 
-         (string)OrderTakeProfit(), sCSV,
-         (string)OrderStopLoss(), sCSV,
-         (string)OrderComment(), sCSV, 
-         t1, sCSV, 
-         (string)vTP, sCSV,
-         (string)vSL, sCSV,
-         DoubleToString(OrderProfit(), 2), sCSV,
-         gIssue
+            sCol, sCSV, 
+            (string)OrderSymbol(), sCSV, 
+            (string)OrderTicket(), sCSV, 
+            (string)OrderOpenTime(), sCSV, 
+            (string)OrderCloseTime(), sCSV, 
+            (string)OrderOpenPrice(), sCSV, 
+            (string)OrderClosePrice(), sCSV, 
+            (string)OrderTakeProfit(), sCSV,
+            (string)OrderStopLoss(), sCSV,
+            (string)OrderComment(), sCSV, 
+            t1, sCSV, 
+            (string)vTP, sCSV,
+            (string)vSL, sCSV,
+            DoubleToString(OrderProfit(), 2), sCSV,
+            gIssue
    );
  
    if (sHTML)
@@ -274,7 +283,7 @@ string setSummaryHTML()
 
       vHTML += "<table>"+"\n";
          
-         for (int i=1; i<40; i+=3)
+         for (int i=1; i<46; i+=3)
          {
             vHTML += "<tr>";
                vHTML += "<td class=\"right\">"+vSum[i]+"</td>";
@@ -361,7 +370,7 @@ void setHTMLPage()
 void setHTMLFile() 
 {
    int    vFile = 0;
-   string vFileName = (string)AccountNumber() + ".html";
+   string vFileName = "orders_issues_" + (string)AccountNumber() + ".html";
    string vFileDir = TerminalInfoString(TERMINAL_DATA_PATH) + "\\MQL4\\Files\\";
    
    setHTMLPage();
@@ -397,7 +406,7 @@ void getBigger()
          vDiff = OrderStopLoss() - OrderClosePrice();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
+         gBiggerSL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
       }
       
       // EARN: bigger TP (TP slip)
@@ -406,7 +415,7 @@ void getBigger()
          vDiff = OrderClosePrice() - OrderTakeProfit(); 
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gE++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
+         gBiggerTP++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
       }
    }
    
@@ -418,7 +427,7 @@ void getBigger()
          vDiff = OrderClosePrice() - OrderStopLoss();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
+         gBiggerSL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
       }
       
       // EARN: bigger TP (TP slip)
@@ -427,7 +436,7 @@ void getBigger()
          vDiff = OrderTakeProfit() - OrderClosePrice();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gE++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
+         gBiggerTP++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
       }
    }
 }
@@ -457,11 +466,11 @@ void getSmaller()
             vDiff = OrderClosePrice() - OrderStopLoss(); 
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gE++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
+            gCutSLB++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
          }
          
          // closed by you
-         if (StringFind(k, "[sl]", 0) == -1) { gEqSLME++; }
+         if (StringFind(k, "[sl]", 0) == -1) { gCutSLT++; }
       }
       
       // LOSS: smaller TP (faster closed TP)
@@ -478,11 +487,11 @@ void getSmaller()
             vDiff = OrderTakeProfit() - OrderClosePrice();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gL++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
+            gCutTPB++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
          }
 
          // closed by you
-         if (StringFind(k, "[tp]", 0) == -1) { gEqTPME++; }
+         if (StringFind(k, "[tp]", 0) == -1) { gCutTPT++; }
       }
    }
     
@@ -502,11 +511,11 @@ void getSmaller()
             vDiff = OrderStopLoss() - OrderClosePrice();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gE++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
+            gCutSLB++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
          }
 
          // closed by you
-         if (StringFind(k, "[sl]", 0) == -1) { gEqSLME++; }
+         if (StringFind(k, "[sl]", 0) == -1) { gCutSLT++; }
       }
       
       // LOSS: smaller TP (faster closed TP)
@@ -523,11 +532,11 @@ void getSmaller()
             vDiff = OrderClosePrice() - OrderTakeProfit();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gL++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
+            gCutTPB++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
          }
 
          // closed by you
-         if (StringFind(k, "[tp]", 0) == -1) { gEqTPME++; }
+         if (StringFind(k, "[tp]", 0) == -1) { gCutTPT++; }
       }
    }
 }
@@ -538,8 +547,8 @@ void getSmaller()
 
 void getEqual() 
 {
-   if (OrderTakeProfit() == OrderClosePrice()) { gEqTP++; }
-   if (OrderStopLoss()   == OrderClosePrice()) { gEqSL++; }
+   if (OrderTakeProfit() == OrderClosePrice()) { gTPEqual++; }
+   if (OrderStopLoss()   == OrderClosePrice()) { gSLEqual++; }
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -576,8 +585,8 @@ void getQuick()
    
    if (vT.year == 1970 && vT.mon == 1 && vT.day == 1 && vT.hour == 0 && vT.min == 0) {
    
-      if (vT.sec < 3 && OrderProfit() > 0) { gIssue = "QUICK "+ gIssue; gEQuick++; gShow = 1; }
-      if (vT.sec < 3 && OrderProfit() < 0) { gIssue = "QUICK "+ gIssue; gLQuick++; gShow = 1; }
+      if (vT.sec < 3 && OrderProfit() > 0) { gIssue = "QUICK "+ gIssue; gQuickEarn++; gShow = 1; }
+      if (vT.sec < 3 && OrderProfit() < 0) { gIssue = "QUICK "+ gIssue; gQuickLoss++; gShow = 1; }
    }
 }
 
@@ -595,10 +604,10 @@ void getOpenSlip()
    
    if (StringFind(k, ";", 0) > 0) { 
     
-      gOpen = true;
+      gHasOpen = true;
       StringSplit(k, StringGetCharacter(";",0), kExt);
       
-      if (OrderOpenPrice() != (double)kExt[1]) { gIssue += "OPEN"; gO++; gShow = 1; }               
+      if (OrderOpenPrice() != (double)kExt[1]) { gIssue += "OPEN"; gOpenSlip++; gShow = 1; }               
    }
 }
 
