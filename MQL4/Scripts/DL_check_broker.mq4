@@ -151,21 +151,21 @@ void showSummary()
                "%s %s " +  
                "%s" +
                "",   
-               sCol, sCSV, 
-               "Symbol", sCSV, 
-               "Ticket", sCSV, 
-               "Open time", sCSV,
-               "Closed time", sCSV,
-               "Open price", sCSV,
-               "Closed price", sCSV,
-               "TP price", sCSV,
-               "SL price", sCSV,
-               "Comment", sCSV,
-               "Type", sCSV,
-               "TP points", sCSV,
-               "SL points", sCSV,
-               "Profit", sCSV,
-               "Issue"
+                  sCol, sCSV, 
+                  "Symbol", sCSV, 
+                  "Ticket", sCSV, 
+                  "Open time", sCSV,
+                  "Closed time", sCSV,
+                  "Open price", sCSV,
+                  "Closed price", sCSV,
+                  "TP price", sCSV,
+                  "SL price", sCSV,
+                  "Comment", sCSV,
+                  "Type", sCSV,
+                  "TP points", sCSV,
+                  "SL points", sCSV,
+                  "Profit", sCSV,
+                  "Issue"
    );
 
    Print(sLine);
@@ -450,6 +450,8 @@ void getSmaller()
          )
       {
          k = OrderComment();
+
+         // closed by broker
          if (StringFind(k, "[sl]", 0) >   0) 
          { 
             vDiff = OrderClosePrice() - OrderStopLoss(); 
@@ -457,6 +459,8 @@ void getSmaller()
 
             gE++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
          }
+         
+         // closed by you
          if (StringFind(k, "[sl]", 0) == -1) { gEqSLME++; }
       }
       
@@ -467,6 +471,8 @@ void getSmaller()
          )
       {
          k = OrderComment();
+
+         // closed by broker
          if (StringFind(k, "[tp]", 0) >   0) 
          { 
             vDiff = OrderTakeProfit() - OrderClosePrice();
@@ -474,6 +480,8 @@ void getSmaller()
 
             gL++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
          }
+
+         // closed by you
          if (StringFind(k, "[tp]", 0) == -1) { gEqTPME++; }
       }
    }
@@ -487,6 +495,8 @@ void getSmaller()
          )
       {
          k = OrderComment();
+
+         // closed by broker
          if (StringFind(k, "[sl]", 0) >   0) 
          { 
             vDiff = OrderStopLoss() - OrderClosePrice();
@@ -494,6 +504,8 @@ void getSmaller()
 
             gE++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
          }
+
+         // closed by you
          if (StringFind(k, "[sl]", 0) == -1) { gEqSLME++; }
       }
       
@@ -504,6 +516,8 @@ void getSmaller()
          )
       {
          k = OrderComment();
+
+         // closed by broker
          if (StringFind(k, "[tp]", 0) >   0) 
          { 
             vDiff = OrderClosePrice() - OrderTakeProfit();
@@ -511,13 +525,15 @@ void getSmaller()
 
             gL++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
          }
+
+         // closed by you
          if (StringFind(k, "[tp]", 0) == -1) { gEqTPME++; }
       }
    }
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Get orders with expected TP or SL price
+// Get orders closed with expected TP or SL price
 // -----------------------------------------------------------------------------------------------------------------------
 
 void getEqual() 
@@ -527,7 +543,7 @@ void getEqual()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Get orders with set TP or SL price
+// Get orders closed with set TP or SL price
 // -----------------------------------------------------------------------------------------------------------------------
 
 void getWithSet() 
@@ -538,7 +554,7 @@ void getWithSet()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Get orders with not set TP or SL price
+// Get orders closed without set TP and SL price
 // -----------------------------------------------------------------------------------------------------------------------
 
 void getWithNotSet() 
@@ -621,7 +637,7 @@ void OnStart()
          getQuick();       // quick orders
          getOpenSlip();    // open slip
          
-         gActivated++;           // all olders but only activated
+         gActivated++;     // all olders but only activated
       }
       if (gShow == 1) { setEntry(); }
    }
