@@ -37,9 +37,9 @@ double gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gQuickEarn = 0;
 double gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0;
 double gActivated = 0, gSet = 0, gNotSet = 0, gOpenSlip = 0, gBrokerClosed = 0;
 double gPoint = 0, gRg = 0;
-string gHTML = "", gHTMLe = "";
+string gHTML = "", gHTMLe = "", gHTMLeq = "";
 string gIssue = "";
-string vSum[46];
+string gSum = "";
 
 // -----------------------------------------------------------------------------------------------------------------------
 // Set final summary
@@ -47,94 +47,143 @@ string vSum[46];
 
 void setSummary()
 {
-   string result = "";
+   string vR = "";
+   string vDataSep = "$";
 
    // calculate
 
    gBrokerClosed = gBiggerTP + gBiggerSL + gCutTPB + gCutSLB + gTPEqual + gSLEqual;
    gRg = ( (gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / gBrokerClosed ) * 100;
 
-   if (gRg == 100) { result = "DEMO ?"; } 
-   else if (gRg > 80) { result = "VERY GOOD"; } 
-   else if (gRg > 50) { result = "GOOD"; }
-   else if (gRg > 20) { result = "BAD"; }
-   else { result = "VERY BAD"; }
+   if (gRg == 100) { vR = "DEMO ?"; } 
+   else if (gRg > 80) { vR = "VERY GOOD"; } 
+   else if (gRg > 50) { vR = "GOOD"; }
+   else if (gRg > 20) { vR = "BAD"; }
+   else { vR = "VERY BAD"; }
 
-   result += "   ( " + DoubleToStr(gRg, 0) + "% ) ";
+   vR += "   ( " + DoubleToStr(gRg, 0) + "% ) ";
  
    // set summary
    
-   vSum[0] = "Final result for Broker: "+result;
+   gSum += "<h2>" + "Final result for Broker: " + vR + "</h2>";
+   gSum += vDataSep;   
+
+   gSum += (string)gBiggerTP;
+   gSum += vDataSep;
+   gSum += "(good broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with bigger TakeProfit";
+   gSum += vDataSep;
+
+   gSum += (string)gCutSLB;
+   gSum += vDataSep;
+   gSum += "(good broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with smaller StopLoss";
+   gSum += vDataSep;
+
+   gSum += (string)gTPEqual;
+   gSum += vDataSep;
+   gSum += "(good broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with TakeProfit expected by trader";
+   gSum += vDataSep;
+
+   gSum += (string)gSLEqual;
+   gSum += vDataSep;
+   gSum += "(good broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with StopLoss expected by trader";
+   gSum += vDataSep;
+
+   gSum += (string)gBiggerSL;
+   gSum += vDataSep;
+   gSum += "(bad broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with bigger StopLoss";
+   gSum += vDataSep;
+
+   gSum += (string)gCutTPB;
+   gSum += vDataSep;
+   gSum += "(bad broker)";
+   gSum += vDataSep;
+   gSum += "Orders closed by broker with smaller TakeProfit";
+   gSum += vDataSep;
    
-   vSum[1] = (string)gBiggerTP;
-   vSum[2] = "(good broker)";
-   vSum[3] = "Orders closed by broker with bigger TakeProfit";
+   gSum += (string)gBrokerClosed;
+   gSum += vDataSep;
+   gSum += "(secure strategy)";
+   gSum += vDataSep;
+   gSum += "All orders closed by broker with set StopLoss or TakeProfit";
+   gSum += vDataSep;
+
+   gSum += (string)gCutSLT;
+   gSum += vDataSep;
+   gSum += "(good strategy)";
+   gSum += vDataSep;
+   gSum += "Orders closed by trader before StopLoss activation (cut loss)";
+   gSum += vDataSep;
+
+   gSum += (string)gCutTPT;
+   gSum += vDataSep;
+   gSum += "(bad strategy)";
+   gSum += vDataSep;
+   gSum += "Orders closed by trader before TakeProfit activation (cut profit)";
+   gSum += vDataSep;
    
-   vSum[4] = (string)gCutSLB;
-   vSum[5] = "(good broker)";
-   vSum[6] = "Orders closed by broker with smaller StopLoss";
+   gSum += (string)gQuickEarn;
+   gSum += vDataSep;
+   gSum += "(good for scalpers & robots)";
+   gSum += vDataSep;
+   gSum += "Quick orders with earn (profit > 0)";
+   gSum += vDataSep;
 
-   vSum[7] = (string)gTPEqual;
-   vSum[8] = "(good broker)";
-   vSum[9] = "Orders closed by broker with TakeProfit expected by trader";
-
-   vSum[10] = (string)gSLEqual;
-   vSum[11] = "(good broker)";
-   vSum[12] = "Orders closed by broker with StopLoss expected by trader";
-
-   vSum[13] = (string)gBiggerSL;
-   vSum[14] = "(bad broker)";
-   vSum[15] = "Orders closed by broker with bigger StopLoss";
-
-   vSum[16] = (string)gCutTPB;
-   vSum[17] = "(bad broker)";
-   vSum[18] = "Orders closed by broker with smaller TakeProfit";
-   
-   vSum[19] = (string)gBrokerClosed;
-   vSum[20] = "(secure strategy)";
-   vSum[21] = "All orders closed by broker with set StopLoss or TakeProfit";
-
-   vSum[22] = (string)gCutSLT;
-   vSum[23] = "(good strategy)";
-   vSum[24] = "Orders closed by trader before StopLoss activation (cut loss)";
-
-   vSum[25] = (string)gCutTPT;
-   vSum[26] = "(bad strategy)";
-   vSum[27] = "Orders closed by trader before TakeProfit activation (cut profit)";
-   
-   vSum[28] = (string)gQuickEarn;
-   vSum[29] = "(good for scalpers & robots)";
-   vSum[30] = "Quick orders with earn (profit > 0)";
-
-   vSum[31] = (string)gQuickLoss;
-   vSum[32] = "(not good for scalpers & robots)";
-   vSum[33] = "Quick orders with loss (profit < 0)";
+   gSum += (string)gQuickLoss;
+   gSum += vDataSep;
+   gSum += "(not good for scalpers & robots)";
+   gSum += vDataSep;
+   gSum += "Quick orders with loss (profit < 0)";
+   gSum += vDataSep;
   
    if (gHasOpen) 
    {
-      vSum[34] = (string)gOpenSlip;
-      vSum[35] = "(not very liquid market)";
-      vSum[36] = "Orders opened by broker with different open price";
+      gSum += (string)gOpenSlip;
+      gSum += vDataSep;
+      gSum += "(not very liquid market)";
+      gSum += vDataSep;
+      gSum += "Orders opened by broker with different open price";
+      gSum += vDataSep;
    }
    else
    {
-      vSum[34] = "-";
-      vSum[35] = "";
-      vSum[36] = "To use open price slips feature you need to have for each order exact ";
-      vSum[36] += "comment format e.g. ;requested_open_price; to compare with OrderOpenPrice() later.";
+      gSum += "-";
+      gSum += vDataSep;
+      gSum += "";
+      gSum += vDataSep;
+      gSum += "To use open price slips feature you need to have for each order exact ";
+      gSum += "comment format e.g. ;requested_open_price; to compare with OrderOpenPrice() later.";
+      gSum += vDataSep;
    }
    
-   vSum[37] = (string)gSet;
-   vSum[38] = "";
-   vSum[39] = "All orders with set StopLoss or TakeProfit";
+   gSum += (string)gSet;
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "All orders with set StopLoss or TakeProfit";
+   gSum += vDataSep;
 
-   vSum[40] = (string)gNotSet;
-   vSum[41] = "(risky strategy)";
-   vSum[42] = "All orders without set StopLoss or TakeProfit";
+   gSum += (string)gNotSet;
+   gSum += vDataSep;
+   gSum += "(risky strategy)";
+   gSum += vDataSep;
+   gSum += "All orders without set StopLoss or TakeProfit";
+   gSum += vDataSep;
 
-   vSum[43] = (string)gActivated;
-   vSum[44] = "";
-   vSum[45] = "All orders (realized except cancelled and pending)";
+   gSum += (string)gActivated;
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "All orders (realized except cancelled and pending)";
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -143,6 +192,8 @@ void setSummary()
 
 void showSummary()
 {
+   string vArr[];
+
    // show table header
    PrintFormat("%s %s " + 
                "%s %s " + 
@@ -179,13 +230,15 @@ void showSummary()
 
    Print(sLine);
 
-   for (int i=45; i>0; i-=3)
+   StringSplit(gSum, StringGetCharacter("$", 0), vArr);
+
+   for (int i=ArraySize(vArr)-1; i>0; i-=3)
    {
-      PrintFormat("%s %s %s %s %s %s %s", sCol, sCSV, vSum[i-2], sCSV, vSum[i-1], sCSV, vSum[i] );
+      PrintFormat("%s %s %s %s %s %s %s", sCol, sCSV, vArr[i-2], sCSV, vArr[i-1], sCSV, vArr[i] );
    }
 
    Print(sLine);
-   Print(sCol + vSum[0]);
+   Print(sCol + vArr[0]);
    Print(sLine);
 }
 
@@ -196,7 +249,7 @@ void showSummary()
 void setEntry()
 {
    double vTP = 0, vSL = 0;
-   string t1 = "";
+   string t1 = "", vHTML = "";
 
    if (OrderType() == OP_BUY)
    { 
@@ -216,58 +269,64 @@ void setEntry()
       vSL = MathRound(vSL / gPoint);
    }
 
-   // set table data rows
-   PrintFormat("%s %s " + 
-         "%s %s " + 
-         "%s %s " + 
-         "%s %s " + 
-         "%s %s " +  
-         "%s %s " + 
-         "%s %s " +  
-         "%s %s " + 
-         "%s %s " + 
-         "%s %s " + 
-         "%s %s " +  
-         "%s %s " + 
-         "%s %s " +  
-         "%s %s " + 
-         "%s" + 
-         "",
-            sCol, sCSV, 
-            (string)OrderSymbol(), sCSV, 
-            (string)OrderTicket(), sCSV, 
-            (string)OrderOpenTime(), sCSV, 
-            (string)OrderCloseTime(), sCSV, 
-            (string)OrderOpenPrice(), sCSV, 
-            (string)OrderClosePrice(), sCSV, 
-            (string)OrderTakeProfit(), sCSV,
-            (string)OrderStopLoss(), sCSV,
-            (string)OrderComment(), sCSV, 
-            t1, sCSV, 
-            (string)vTP, sCSV,
-            (string)vSL, sCSV,
-            DoubleToString(OrderProfit(), 2), sCSV,
-            gIssue
-   );
- 
+   // show in log
+   if (gShow == 1) {
+      
+      PrintFormat("%s %s " + 
+            "%s %s " + 
+            "%s %s " + 
+            "%s %s " + 
+            "%s %s " +  
+            "%s %s " + 
+            "%s %s " +  
+            "%s %s " + 
+            "%s %s " + 
+            "%s %s " + 
+            "%s %s " +  
+            "%s %s " + 
+            "%s %s " +  
+            "%s %s " + 
+            "%s" + 
+            "",
+               sCol, sCSV, 
+               (string)OrderSymbol(), sCSV, 
+               (string)OrderTicket(), sCSV, 
+               (string)OrderOpenTime(), sCSV, 
+               (string)OrderCloseTime(), sCSV, 
+               (string)OrderOpenPrice(), sCSV, 
+               (string)OrderClosePrice(), sCSV, 
+               (string)OrderTakeProfit(), sCSV,
+               (string)OrderStopLoss(), sCSV,
+               (string)OrderComment(), sCSV, 
+               t1, sCSV, 
+               (string)vTP, sCSV,
+               (string)vSL, sCSV,
+               DoubleToString(OrderProfit(), 2), sCSV,
+               gIssue
+      );
+   }
+
    if (sHTML)
    {
-      gHTMLe += "<tr>";
-         gHTMLe += "<td>"+(string)OrderSymbol()+"</td>";
-         gHTMLe += "<td>"+(string)OrderTicket()+"</td>";
-         gHTMLe += "<td>"+(string)OrderOpenTime()+"</td>";
-         gHTMLe += "<td>"+(string)OrderCloseTime()+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)OrderOpenPrice()+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)OrderClosePrice()+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)OrderTakeProfit()+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)OrderStopLoss()+"</td>";
-         gHTMLe += "<td>"+(string)OrderComment()+"</td>";
-         gHTMLe += "<td>"+t1+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)vTP+"</td>";
-         gHTMLe += "<td class=\"right\">"+(string)vSL+"</td>";
-         gHTMLe += "<td class=\"right\">"+DoubleToString(OrderProfit(), 2)+"</td>";
-         gHTMLe += "<td>"+gIssue+"</td>";
-      gHTMLe += "</tr>"+"\n";
+      vHTML += "<tr>";
+         vHTML += "<td>"+(string)OrderSymbol()+"</td>";
+         vHTML += "<td>"+(string)OrderTicket()+"</td>";
+         vHTML += "<td>"+(string)OrderOpenTime()+"</td>";
+         vHTML += "<td>"+(string)OrderCloseTime()+"</td>";
+         vHTML += "<td class=\"right\">"+(string)OrderOpenPrice()+"</td>";
+         vHTML += "<td class=\"right\">"+(string)OrderClosePrice()+"</td>";
+         vHTML += "<td class=\"right\">"+(string)OrderTakeProfit()+"</td>";
+         vHTML += "<td class=\"right\">"+(string)OrderStopLoss()+"</td>";
+         vHTML += "<td>"+(string)OrderComment()+"</td>";
+         vHTML += "<td>"+t1+"</td>";
+         vHTML += "<td class=\"right\">"+(string)vTP+"</td>";
+         vHTML += "<td class=\"right\">"+(string)vSL+"</td>";
+         vHTML += "<td class=\"right\">"+DoubleToString(OrderProfit(), 2)+"</td>";
+         vHTML += "<td>"+gIssue+"</td>";
+      vHTML += "</tr>"+"\n";
+
+      if (gShow == 1) { gHTMLe += vHTML; }
+      if (gShow == 2) { gHTMLeq += vHTML; }
    }
 }
 
@@ -277,18 +336,20 @@ void setEntry()
 
 string setSummaryHTML()
 {
-   string vHTML = "";
+   string vHTML = "", vArr[];
 
-   vHTML += vSum[0]+"\n";
+   StringSplit(gSum, StringGetCharacter("$", 0), vArr);
+
+   vHTML += vArr[0]+"\n";
 
       vHTML += "<table>"+"\n";
          
-         for (int i=1; i<46; i+=3)
+         for (int i=1; i<ArraySize(vArr); i+=3)
          {
             vHTML += "<tr>";
-               vHTML += "<td class=\"right\">"+vSum[i]+"</td>";
-               vHTML += "<td>"+vSum[i+1]+"</td>";
-               vHTML += "<td>"+vSum[i+2]+"</td>";
+               vHTML += "<td class=\"right\">"+vArr[i]+"</td>";
+               vHTML += "<td>"+vArr[i+1]+"</td>";
+               vHTML += "<td>"+vArr[i+2]+"</td>";
             vHTML += "</tr>"+"\n";
          }
 
@@ -325,6 +386,8 @@ void setHTMLPage()
    
             vHTML += setSummaryHTML();
 
+            vHTML += "<h2>Orders with issues closed by broker:</h2>";
+
             vHTML += "<table>"+"\n";
                vHTML += "<thead>"+"\n";
                   vHTML += "<tr>";
@@ -349,7 +412,44 @@ void setHTMLPage()
                   vHTML += gHTMLe;
    
                vHTML += "</tbody>"+"\n";
-               vHTML += "</table>"+"\n";
+            vHTML += "</table>"+"\n";
+
+            vHTML += "<h2>Orders closed by broker with expected price for TP or SL:</h2>";
+
+            vHTML += "<h3>This table below shows orders closed by broker with correct TP or SL price. ";
+            vHTML += "If there is incorrect TP or SL size, it means there was open price slip and broker ";
+            vHTML += "not gaves you slip points back at the end of order. You need to verify the ";
+            vHTML += "TP and SL size on your own, if you remember how many points it should be. ";
+            vHTML += "If there is not so many points this is natural thing at not very liquid market but ";
+            vHTML += "if there are many orders with big difference and nothing with points back at the table above ";
+            vHTML += "this may means the broker cheats you or you have totally wrong strategy ";
+            vHTML += "(e.g. scalping at not very liquid market maker or index). </h3>";
+
+            vHTML += "<table>"+"\n";
+               vHTML += "<thead>"+"\n";
+                  vHTML += "<tr>";
+                     vHTML += "<th><b>Symbol</b></td>";
+                     vHTML += "<th><b>Ticket</b></td>";
+                     vHTML += "<th><b>Open time</b></td>";
+                     vHTML += "<th><b>Closed time</b></td>";
+                     vHTML += "<th class=\"right\"><b>Open price</b></td>";
+                     vHTML += "<th class=\"right\"><b>Closed price</b></td>";
+                     vHTML += "<th class=\"right\"><b>TP price</b></td>";
+                     vHTML += "<th class=\"right\"><b>SL price</b></td>";
+                     vHTML += "<th><b>Comment</b></td>";
+                     vHTML += "<th><b>Type</b></td>";
+                     vHTML += "<th class=\"right\"><b>TP points</b></td>";
+                     vHTML += "<th class=\"right\"><b>SL points</b></td>";
+                     vHTML += "<th class=\"right\"><b>Profit</b></td>";
+                     vHTML += "<th><b>Issue</b></td>";
+                  vHTML += "</tr>"+"\n";
+               vHTML += "</thead>"+"\n";
+               vHTML += "<tbody>"+"\n";
+      
+                  vHTML += gHTMLeq;
+   
+               vHTML += "</tbody>"+"\n";
+            vHTML += "</table>"+"\n";
    
             vHTML += "Report generated by: ";
             vHTML += "<a href=\"https://github.com/dprojects/MetaTrader-tools/";
@@ -547,8 +647,8 @@ void getSmaller()
 
 void getEqual() 
 {
-   if (OrderTakeProfit() == OrderClosePrice()) { gTPEqual++; }
-   if (OrderStopLoss()   == OrderClosePrice()) { gSLEqual++; }
+   if (OrderTakeProfit() == OrderClosePrice()) { gTPEqual++; gShow = 2; gIssue += "TP size? "; }
+   if (OrderStopLoss()   == OrderClosePrice()) { gSLEqual++; gShow = 2; gIssue += "SL size? "; }
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -648,7 +748,8 @@ void OnStart()
          
          gActivated++;     // all olders but only activated
       }
-      if (gShow == 1) { setEntry(); }
+      if (gShow == 1) { setEntry(); }  // issues
+      if (gShow == 2) { setEntry(); }  // open slip if TP or SL is not correct
    }
    
    setSummary();  // calculate final result
