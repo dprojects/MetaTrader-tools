@@ -32,9 +32,9 @@ string sLine = sCol +
 // -----------------------------------------------------------------------------------------------------------------------
 
 int    gShow = 0;
-bool   gHasOpen = false;
-double gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gQuickEarn = 0;
-double gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0;
+bool   gHasOpen = false, gIsOpen = false;
+double gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gQuickEarn = 0, gOpenEarn = 0;
+double gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0, gOpenLoss = 0;
 double gActivated = 0, gSet = 0, gNotSet = 0, gOpenSlip = 0, gBrokerClosed = 0;
 double gPoint = 0, gRg = 0;
 string gHTML = "", gHTMLe = "", gHTMLeq = "";
@@ -52,8 +52,8 @@ void setSummary()
 
    // calculate
 
-   gBrokerClosed = gBiggerTP + gBiggerSL + gCutTPB + gCutSLB + gTPEqual + gSLEqual;
-   gRg = ( (gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / gBrokerClosed ) * 100;
+   gBrokerClosed = gOpenEarn + gOpenLoss + gBiggerTP + gBiggerSL + gCutTPB + gCutSLB + gTPEqual + gSLEqual;
+   gRg = ( (gOpenEarn + gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / gBrokerClosed ) * 100;
 
    if (gRg == 100) { vR = "DEMO ?"; } 
    else if (gRg > 80) { vR = "VERY GOOD"; } 
@@ -65,7 +65,7 @@ void setSummary()
  
    // set summary
    
-   gSum += "<h2>" + "Final result for Broker: " + vR + "</h2>";
+   gSum += "Final result for Broker: " + vR;
    gSum += vDataSep;   
 
    gSum += (string)gBiggerTP;
@@ -96,6 +96,16 @@ void setSummary()
    gSum += "Orders closed by broker with StopLoss expected by trader";
    gSum += vDataSep;
 
+   if (gHasOpen) 
+   {
+      gSum += (string)gOpenEarn;
+      gSum += vDataSep;
+      gSum += "(good broker)";
+      gSum += vDataSep;
+      gSum += "Orders opened by broker with different open price with returned points or even earn";
+      gSum += vDataSep;
+   }
+
    gSum += (string)gBiggerSL;
    gSum += vDataSep;
    gSum += "(bad broker)";
@@ -110,9 +120,19 @@ void setSummary()
    gSum += "Orders closed by broker with smaller TakeProfit";
    gSum += vDataSep;
    
+   if (gHasOpen) 
+   {
+      gSum += (string)gOpenLoss;
+      gSum += vDataSep;
+      gSum += "(bad broker)";
+      gSum += vDataSep;
+      gSum += "Orders opened by broker with different open price with no points back at the end of order";
+      gSum += vDataSep;
+   }
+   
    gSum += (string)gBrokerClosed;
    gSum += vDataSep;
-   gSum += "(secure strategy)";
+   gSum += "";
    gSum += vDataSep;
    gSum += "All orders closed by broker with set StopLoss or TakeProfit";
    gSum += vDataSep;
@@ -131,6 +151,16 @@ void setSummary()
    gSum += "Orders closed by trader before TakeProfit activation (cut profit)";
    gSum += vDataSep;
    
+   if (gHasOpen) 
+   {
+      gSum += (string)gOpenSlip;
+      gSum += vDataSep;
+      gSum += "(not very liquid market)";
+      gSum += vDataSep;
+      gSum += "Orders opened by broker with different open price";
+      gSum += vDataSep;
+   }
+
    gSum += (string)gQuickEarn;
    gSum += vDataSep;
    gSum += "(good for scalpers & robots)";
@@ -144,30 +174,10 @@ void setSummary()
    gSum += vDataSep;
    gSum += "Quick orders with loss (profit < 0)";
    gSum += vDataSep;
-  
-   if (gHasOpen) 
-   {
-      gSum += (string)gOpenSlip;
-      gSum += vDataSep;
-      gSum += "(not very liquid market)";
-      gSum += vDataSep;
-      gSum += "Orders opened by broker with different open price";
-      gSum += vDataSep;
-   }
-   else
-   {
-      gSum += "-";
-      gSum += vDataSep;
-      gSum += "";
-      gSum += vDataSep;
-      gSum += "To use open price slips feature you need to have for each order exact ";
-      gSum += "comment format e.g. ;requested_open_price; to compare with OrderOpenPrice() later.";
-      gSum += vDataSep;
-   }
    
    gSum += (string)gSet;
    gSum += vDataSep;
-   gSum += "";
+   gSum += "(secure strategy)";
    gSum += vDataSep;
    gSum += "All orders with set StopLoss or TakeProfit";
    gSum += vDataSep;
@@ -340,7 +350,7 @@ string setSummaryHTML()
 
    StringSplit(gSum, StringGetCharacter("$", 0), vArr);
 
-   vHTML += vArr[0]+"\n";
+   vHTML += "<h2>" + vArr[0]+ "</h2>" + "\n";
 
       vHTML += "<table>"+"\n";
          
@@ -364,7 +374,26 @@ string setSummaryHTML()
 
 void setHTMLPage()
 {
-   string vHTML = "";
+   string vHTML = "", vHead = "";
+
+   vHead += "<thead>"+"\n";
+      vHead += "<tr>";
+         vHead += "<th><b>Symbol</b></td>";
+         vHead += "<th><b>Ticket</b></td>";
+         vHead += "<th><b>Open time</b></td>";
+         vHead += "<th><b>Closed time</b></td>";
+         vHead += "<th class=\"right\"><b>Open price</b></td>";
+         vHead += "<th class=\"right\"><b>Closed price</b></td>";
+         vHead += "<th class=\"right\"><b>TP price</b></td>";
+         vHead += "<th class=\"right\"><b>SL price</b></td>";
+         vHead += "<th><b>Comment</b></td>";
+         vHead += "<th><b>Type</b></td>";
+         vHead += "<th class=\"right\"><b>TP points</b></td>";
+         vHead += "<th class=\"right\"><b>SL points</b></td>";
+         vHead += "<th class=\"right\"><b>Profit</b></td>";
+         vHead += "<th><b>Issue</b></td>";
+      vHead += "</tr>"+"\n";
+   vHead += "</thead>"+"\n";
 
    vHTML += "<!DOCTYPE html>"+"\n";
    vHTML += "<html>"+"\n";
@@ -389,68 +418,35 @@ void setHTMLPage()
             vHTML += "<h2>Orders with issues closed by broker:</h2>";
 
             vHTML += "<table>"+"\n";
-               vHTML += "<thead>"+"\n";
-                  vHTML += "<tr>";
-                     vHTML += "<th><b>Symbol</b></td>";
-                     vHTML += "<th><b>Ticket</b></td>";
-                     vHTML += "<th><b>Open time</b></td>";
-                     vHTML += "<th><b>Closed time</b></td>";
-                     vHTML += "<th class=\"right\"><b>Open price</b></td>";
-                     vHTML += "<th class=\"right\"><b>Closed price</b></td>";
-                     vHTML += "<th class=\"right\"><b>TP price</b></td>";
-                     vHTML += "<th class=\"right\"><b>SL price</b></td>";
-                     vHTML += "<th><b>Comment</b></td>";
-                     vHTML += "<th><b>Type</b></td>";
-                     vHTML += "<th class=\"right\"><b>TP points</b></td>";
-                     vHTML += "<th class=\"right\"><b>SL points</b></td>";
-                     vHTML += "<th class=\"right\"><b>Profit</b></td>";
-                     vHTML += "<th><b>Issue</b></td>";
-                  vHTML += "</tr>"+"\n";
-               vHTML += "</thead>"+"\n";
+               vHTML += vHead;
                vHTML += "<tbody>"+"\n";
-      
                   vHTML += gHTMLe;
-   
                vHTML += "</tbody>"+"\n";
             vHTML += "</table>"+"\n";
-
-            vHTML += "<h2>Orders closed by broker with expected price for TP or SL:</h2>";
-
-            vHTML += "<h3>This table below shows orders closed by broker with correct TP or SL price. ";
-            vHTML += "If there is incorrect TP or SL size, it means there was open price slip and broker ";
-            vHTML += "not gaves you slip points back at the end of order. You need to verify the ";
-            vHTML += "TP and SL size on your own, if you remember how many points it should be. ";
-            vHTML += "If there is not so many points this is natural thing at not very liquid market but ";
-            vHTML += "if there are many orders with big difference and nothing with points back at the table above ";
-            vHTML += "this may means the broker cheats you or you have totally wrong strategy ";
-            vHTML += "(e.g. scalping at not very liquid market maker or index). </h3>";
-
-            vHTML += "<table>"+"\n";
-               vHTML += "<thead>"+"\n";
-                  vHTML += "<tr>";
-                     vHTML += "<th><b>Symbol</b></td>";
-                     vHTML += "<th><b>Ticket</b></td>";
-                     vHTML += "<th><b>Open time</b></td>";
-                     vHTML += "<th><b>Closed time</b></td>";
-                     vHTML += "<th class=\"right\"><b>Open price</b></td>";
-                     vHTML += "<th class=\"right\"><b>Closed price</b></td>";
-                     vHTML += "<th class=\"right\"><b>TP price</b></td>";
-                     vHTML += "<th class=\"right\"><b>SL price</b></td>";
-                     vHTML += "<th><b>Comment</b></td>";
-                     vHTML += "<th><b>Type</b></td>";
-                     vHTML += "<th class=\"right\"><b>TP points</b></td>";
-                     vHTML += "<th class=\"right\"><b>SL points</b></td>";
-                     vHTML += "<th class=\"right\"><b>Profit</b></td>";
-                     vHTML += "<th><b>Issue</b></td>";
-                  vHTML += "</tr>"+"\n";
-               vHTML += "</thead>"+"\n";
-               vHTML += "<tbody>"+"\n";
-      
-                  vHTML += gHTMLeq;
+            
+            if (!gHasOpen)
+            {
+               vHTML += "<h2>Orders closed by broker with expected price for TP or SL:</h2>";
    
-               vHTML += "</tbody>"+"\n";
-            vHTML += "</table>"+"\n";
+               vHTML += "<h3>This table below shows orders closed by broker with correct TP or SL price. ";
+               vHTML += "If there is incorrect TP or SL size, it means there was open price slip and broker ";
+               vHTML += "not gaves you slip points back at the end of order. You need to verify the ";
+               vHTML += "TP and SL size on your own, if you remember how many points it should be. ";
+               vHTML += "If there is not so many points this is natural thing at not very liquid market but ";
+               vHTML += "if there are many orders with big difference and nothing with points back at the table above ";
+               vHTML += "this may means the broker cheats you or you have totally wrong strategy ";
+               vHTML += "(e.g. scalping at not very liquid market maker or index). To see more detailed report ";
+               vHTML += "activate feature by adding for each order exact comment format e.g. ";
+               vHTML += ";requested_open_price; to compare with OrderOpenPrice() later.</h3>";
    
+               vHTML += "<table>"+"\n";
+                  vHTML += vHead;
+                  vHTML += "<tbody>"+"\n";
+                     vHTML += gHTMLeq;
+                  vHTML += "</tbody>"+"\n";
+               vHTML += "</table>"+"\n";
+            }
+
             vHTML += "Report generated by: ";
             vHTML += "<a href=\"https://github.com/dprojects/MetaTrader-tools/";
             vHTML += "blob/master/MQL4/Scripts/DL_check_broker.mq4\">DL_check_broker.mq4</a>"+"\n";
@@ -496,7 +492,22 @@ void setHTMLFile()
 
 void getBigger() 
 {
-   double vDiff = 0;
+   double vDiff = 0, vSlip = 0, vSlipVal = 0, vReq = 0;
+   string k = "", kExt[];
+   
+   // set open slip
+   if (gIsOpen)
+   {
+      k = OrderComment(); StringSplit(k, StringGetCharacter(";",0), kExt); vReq = (double)kExt[1];
+      if (OrderOpenPrice() != vReq)
+      {
+         if (gPoint != 0)
+         { 
+            vSlip = MathRound((OrderOpenPrice() - vReq) / gPoint);
+            vSlipVal = MathAbs(vSlip);
+         }
+      }
+   }
 
    if (OrderType() == OP_BUY)
    {    
@@ -505,8 +516,17 @@ void getBigger()
       { 
          vDiff = OrderStopLoss() - OrderClosePrice();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
-
-         gBiggerSL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
+         
+         if (gIsOpen)
+         {
+            if (vSlip > 0) { gOpenLoss++; gIssue += "OPEN+"+(string)vSlipVal+" & SL+"+(string)vDiff+" => bigger loss"; }
+            if (vSlip < 0) { gOpenSlip++; gIssue += "OPEN-"+(string)vSlipVal+" & SL+"+(string)vDiff+" => returned ok?"; }
+         }
+         else 
+         {
+            gIssue += "slip SL+"+(string)vDiff;
+         }
+         gBiggerSL++; gShow = 1; 
       }
       
       // EARN: bigger TP (TP slip)
@@ -515,7 +535,16 @@ void getBigger()
          vDiff = OrderClosePrice() - OrderTakeProfit(); 
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gBiggerTP++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
+         if (gIsOpen)
+         {
+            if (vSlip > 0) { gOpenSlip++; gIssue += "OPEN+"+(string)vSlipVal+" & TP+"+(string)vDiff+" => returned ok?"; }
+            if (vSlip < 0) { gOpenEarn++; gIssue += "OPEN-"+(string)vSlipVal+" & TP+"+(string)vDiff+" => bigger earn"; }
+         }
+         else 
+         {
+            gIssue += "slip TP+"+(string)vDiff;
+         }
+         gBiggerTP++; gShow = 1;
       }
    }
    
@@ -527,7 +556,16 @@ void getBigger()
          vDiff = OrderClosePrice() - OrderStopLoss();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gBiggerSL++; gShow = 1; gIssue += "slip SL+"+(string)vDiff;
+         if (gIsOpen)
+         {
+            if (vSlip > 0) { gOpenSlip++; gIssue += "OPEN+"+(string)vSlipVal+" & SL+"+(string)vDiff+" => returned ok?"; }
+            if (vSlip < 0) { gOpenLoss++; gIssue += "OPEN-"+(string)vSlipVal+" & SL+"+(string)vDiff+" => bigger loss"; }
+         }
+         else 
+         {
+            gIssue += "slip SL+"+(string)vDiff;
+         }  
+         gBiggerSL++; gShow = 1; 
       }
       
       // EARN: bigger TP (TP slip)
@@ -536,7 +574,16 @@ void getBigger()
          vDiff = OrderTakeProfit() - OrderClosePrice();
          if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-         gBiggerTP++; gShow = 1; gIssue += "slip TP+"+(string)vDiff;
+         if (gIsOpen)
+         {
+            if (vSlip > 0) { gOpenEarn++; gIssue += "OPEN+"+(string)vSlipVal+" & TP+"+(string)vDiff+" => bigger earn"; }
+            if (vSlip < 0) { gOpenLoss++; gIssue += "OPEN-"+(string)vSlipVal+" & TP+"+(string)vDiff+" => returned ok?"; }
+         }
+         else 
+         {
+            gIssue += "slip TP+"+(string)vDiff;
+         }
+         gBiggerTP++; gShow = 1;
       }
    }
 }
@@ -547,8 +594,22 @@ void getBigger()
 
 void getSmaller() 
 {
-   double vDiff = 0;
-   string k = "";   
+   double vDiff = 0, vSlip = 0, vSlipVal = 0, vReq = 0;
+   string k = "", kExt[];
+   
+   // set open slip
+   if (gIsOpen)
+   {
+      k = OrderComment(); StringSplit(k, StringGetCharacter(";",0), kExt); vReq = (double)kExt[1];
+      if (OrderOpenPrice() != vReq)
+      {
+         if (gPoint != 0)
+         { 
+            vSlip = MathRound((OrderOpenPrice() - vReq) / gPoint);
+            vSlipVal = MathAbs(vSlip);
+         }
+      }
+   }
 
    if (OrderType() == OP_BUY)
    {    
@@ -561,12 +622,21 @@ void getSmaller()
          k = OrderComment();
 
          // closed by broker
-         if (StringFind(k, "[sl]", 0) >   0) 
+         if (StringFind(k, "[sl]", 0) != -1) 
          { 
             vDiff = OrderClosePrice() - OrderStopLoss(); 
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gCutSLB++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
+            if (gIsOpen)
+            {
+               if (vSlip > 0) { gOpenSlip++; gIssue += "OPEN+"+(string)vSlipVal+" & SL-"+(string)vDiff+" => returned ok?"; }
+               if (vSlip < 0) { gOpenEarn++; gIssue += "OPEN-"+(string)vSlipVal+" & SL-"+(string)vDiff+" => smaller loss"; }
+            }
+            else 
+            {
+               gIssue += "slip SL-"+(string)vDiff;
+            }
+            gCutSLB++; gShow = 1;
          }
          
          // closed by you
@@ -582,12 +652,21 @@ void getSmaller()
          k = OrderComment();
 
          // closed by broker
-         if (StringFind(k, "[tp]", 0) >   0) 
+         if (StringFind(k, "[tp]", 0) != -1) 
          { 
             vDiff = OrderTakeProfit() - OrderClosePrice();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gCutTPB++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
+            if (gIsOpen)
+            {
+               if (vSlip > 0) { gOpenLoss++; gIssue += "OPEN+"+(string)vSlipVal+" & TP-"+(string)vDiff+" => smaller earn"; }
+               if (vSlip < 0) { gOpenSlip++; gIssue += "OPEN-"+(string)vSlipVal+" & TP-"+(string)vDiff+" => returned ok?"; }
+            }
+            else 
+            {
+               gIssue += "slip TP-"+(string)vDiff;
+            }
+            gCutTPB++; gShow = 1;
          }
 
          // closed by you
@@ -606,12 +685,21 @@ void getSmaller()
          k = OrderComment();
 
          // closed by broker
-         if (StringFind(k, "[sl]", 0) >   0) 
+         if (StringFind(k, "[sl]", 0) != -1) 
          { 
             vDiff = OrderStopLoss() - OrderClosePrice();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
-
-            gCutSLB++; gShow = 1; gIssue += "slip SL-"+(string)vDiff;
+            
+            if (gIsOpen)
+            {
+               if (vSlip > 0) { gOpenEarn++; gIssue += "OPEN+"+(string)vSlipVal+" & SL-"+(string)vDiff+" => smaller loss"; }
+               if (vSlip < 0) { gOpenSlip++; gIssue += "OPEN-"+(string)vSlipVal+" & SL-"+(string)vDiff+" => returned ok?"; }
+            }
+            else 
+            {
+               gIssue += "slip SL-"+(string)vDiff;
+            }
+            gCutSLB++; gShow = 1;
          }
 
          // closed by you
@@ -627,12 +715,21 @@ void getSmaller()
          k = OrderComment();
 
          // closed by broker
-         if (StringFind(k, "[tp]", 0) >   0) 
+         if (StringFind(k, "[tp]", 0) != -1) 
          { 
             vDiff = OrderClosePrice() - OrderTakeProfit();
             if (gPoint != 0) { vDiff = MathRound(vDiff / gPoint); }
 
-            gCutTPB++; gShow = 1; gIssue += "slip TP-"+(string)vDiff;
+            if (gIsOpen)
+            {
+               if (vSlip > 0) { gOpenSlip++; gIssue += "OPEN+"+(string)vSlipVal+" & TP-"+(string)vDiff+" => returned ok?"; }
+               if (vSlip < 0) { gOpenLoss++; gIssue += "OPEN-"+(string)vSlipVal+" & TP-"+(string)vDiff+" => smaller earn"; }
+            }
+            else 
+            {
+               gIssue += "slip TP-"+(string)vDiff;
+            }
+            gCutTPB++; gShow = 1;
          }
 
          // closed by you
@@ -672,7 +769,7 @@ void getWithNotSet()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Get quick orders 
+// Quick orders, less than 3 seconds
 // -----------------------------------------------------------------------------------------------------------------------
 
 void getQuick() 
@@ -691,24 +788,62 @@ void getQuick()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Get orders with open price slip. Open price slip feature.
-// In fact you can't predict if the different open price will be good or bad 
-// in the future (this is how asymetric deviation prevents cheats).      
+// Orders with open price slip. In fact you can't predict if the different open price 
+// will be good or bad in the future.
 // -----------------------------------------------------------------------------------------------------------------------
 
 void getOpenSlip() 
 {
    string k = "", kExt[];
+   double vReq = 0, vSlip = 0;
 
+   // exit if open feature not available in comment
+   if (!gIsOpen) { return; }
+
+   // set open slip size
    k = OrderComment();
+   StringSplit(k, StringGetCharacter(";",0), kExt);
+   vReq = (double)kExt[1];
    
-   if (StringFind(k, ";", 0) > 0) { 
-    
-      gHasOpen = true;
-      StringSplit(k, StringGetCharacter(";",0), kExt);
+   if (OrderOpenPrice() != vReq)
+   {
+      // there is open slip
+      gOpenSlip++; gIssue += "OPEN"; gShow = 1;
       
-      if (OrderOpenPrice() != (double)kExt[1]) { gIssue += "OPEN"; gOpenSlip++; gShow = 1; }               
-   }
+      // set open slip size
+      if (gPoint != 0) { vSlip = MathRound((OrderOpenPrice() - vReq) / gPoint); }
+      
+      // open slip but no points back (TP equal)
+      if (OrderClosePrice() == OrderTakeProfit())
+      {
+         if (OrderType() == OP_BUY)
+         {
+            if (vSlip > 0) { gIssue += "+ => TP-"+(string)MathAbs(vSlip)+" => bad broker"; gOpenLoss++; }  // smaller TP
+            if (vSlip < 0) { gIssue += "- => TP+"+(string)MathAbs(vSlip)+" => good broker"; gOpenEarn++; }  // bigger TP
+         }
+         if (OrderType() == OP_SELL)
+         {
+            if (vSlip < 0) { gIssue += "- => TP-"+(string)MathAbs(vSlip)+" => bad broker"; gOpenLoss++; }  // smaller TP
+            if (vSlip > 0) { gIssue += "+ => TP+"+(string)MathAbs(vSlip)+" => good broker"; gOpenEarn++; }  // bigger TP
+         }
+      }
+      
+      // open slip but no points back (SL equal)
+      if (OrderClosePrice() == OrderStopLoss())
+      {
+         if (OrderType() == OP_BUY)
+         {
+            if (vSlip > 0) { gIssue += "+ => SL+"+(string)MathAbs(vSlip)+" => bad broker"; gOpenLoss++; } // bigger SL
+            if (vSlip < 0) { gIssue += "- => SL-"+(string)MathAbs(vSlip)+" => good broker"; gOpenEarn++; } // smaller SL
+         }
+         if (OrderType() == OP_SELL)
+         {
+            if (vSlip < 0) { gIssue += "- => SL+"+(string)MathAbs(vSlip)+" => bad broker"; gOpenLoss++; } // bigger SL
+            if (vSlip > 0) { gIssue += "+ => SL-"+(string)MathAbs(vSlip)+" => good broker"; gOpenEarn++; } // smaller SL
+         }
+      }
+      gIssue += " ";
+   }   
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -718,6 +853,7 @@ void getOpenSlip()
 void OnStart()
 {
    int    vTotal = OrdersHistoryTotal();
+   string k = "";
    
    Print("");
    Print("");
@@ -730,26 +866,29 @@ void OnStart()
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) { continue; }
      
       // reset values for each order
-      gShow = 0; gIssue = "";
+      gShow = 0; gIssue = ""; gIsOpen = false;
 
       // for old markets, need to open chart to load data to get it worked
       gPoint = MarketInfo(OrderSymbol(), MODE_POINT);
+      
+      // check if there is open feature active in comment
+      k = OrderComment(); if (StringFind(k, ";", 0) != -1) { gIsOpen = true; gHasOpen = true; }
       
       getBigger();         // bigger TP or SL
       getSmaller();        // smaller TP or SL
 
       if (OrderType() == OP_BUY || OrderType() == OP_SELL)
       {
-         getEqual();       // with expected TP or SL price
          getWithSet();     // with set TP or SL
          getWithNotSet();  // with not set TP or SL
          getQuick();       // quick orders
-         getOpenSlip();    // open slip
+         getEqual();       // expected TP or SL price
+         getOpenSlip();    // open slip with expected TP or SL price
          
          gActivated++;     // all olders but only activated
       }
       if (gShow == 1) { setEntry(); }  // issues
-      if (gShow == 2) { setEntry(); }  // open slip if TP or SL is not correct
+      if (!gHasOpen && gShow == 2) { setEntry(); }  // open slip if TP or SL is not correct
    }
    
    setSummary();  // calculate final result
