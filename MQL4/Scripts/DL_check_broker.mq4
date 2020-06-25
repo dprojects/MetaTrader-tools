@@ -16,16 +16,15 @@
 // SETTINGS
 // -----------------------------------------------------------------------------------------------------------------------
 
-// generate HTML output
-bool sHTML = true;
+bool sHTML     = true;                                                        // generate HTML output
+bool sCSV      = true;                                                        // generate CSV output
 
-// separators
-string sCSV = ";";      // entry, for CSV converters
-string sCol = " | ";    // left padding
-string sLine = sCol +
-            "--------------------------------------------------------------------------------" +
-            "--------------------------------------------------------------------------------" +
-            "--------------------------------------------------------------------------------";
+string sSep    = ";";                                                         // CSV entry separator, for converters
+string sCol    = " | ";                                                       // left padding
+string sLine   = sCol +
+                        "--------------------------------------------------------------------------------" +
+                        "--------------------------------------------------------------------------------" +
+                        "--------------------------------------------------------------------------------";
 
 // -----------------------------------------------------------------------------------------------------------------------
 // GLOBALS
@@ -38,6 +37,7 @@ double gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0, gO
 double gActivated = 0, gSet = 0, gNotSet = 0, gOpenSlip = 0, gOpenHonest = 0, gBrokerClosed = 0;
 double gPoint = 0, gRg = 0;
 string gHTML = "", gHTMLe = "", gHTMLeq = "";
+string gCSV = "", gCSVe = "", gCSVeq = "";
 string gIssue = "";
 string gSum = "";
 
@@ -240,69 +240,13 @@ void setSummary()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
-// Show final summary in log
-// -----------------------------------------------------------------------------------------------------------------------
-
-void showSummary()
-{
-   string vArr[];
-
-   // show table header
-   PrintFormat("%s %s " + 
-               "%s %s " + 
-               "%s %s " + 
-               "%s %s " +  
-               "%s %s " +  
-               "%s %s " +  
-               "%s %s " +  
-               "%s %s " +  
-               "%s %s " +  
-               "%s %s " +
-               "%s %s " +  
-               "%s %s " +
-               "%s %s " +  
-               "%s %s " +  
-               "%s" +
-               "",   
-                  sCol, sCSV, 
-                  "Symbol", sCSV, 
-                  "Ticket", sCSV, 
-                  "Open time", sCSV,
-                  "Closed time", sCSV,
-                  "Open price", sCSV,
-                  "Closed price", sCSV,
-                  "TP price", sCSV,
-                  "SL price", sCSV,
-                  "Comment", sCSV,
-                  "Type", sCSV,
-                  "TP points", sCSV,
-                  "SL points", sCSV,
-                  "Profit", sCSV,
-                  "Issue"
-   );
-
-   Print(sLine);
-
-   StringSplit(gSum, StringGetCharacter("$", 0), vArr);
-
-   for (int i=ArraySize(vArr)-1; i>0; i-=3)
-   {
-      PrintFormat("%s %s %s %s %s %s %s", sCol, sCSV, vArr[i-2], sCSV, vArr[i-1], sCSV, vArr[i] );
-   }
-
-   Print(sLine);
-   Print(sCol + vArr[0]);
-   Print(sLine);
-}
-
-// -----------------------------------------------------------------------------------------------------------------------
 // Set entry with issue
 // -----------------------------------------------------------------------------------------------------------------------
 
 void setEntry()
 {
    double vTP = 0, vSL = 0;
-   string t1 = "", vHTML = "";
+   string t1 = "", vHTML = "", vCSV = "";
 
    if (OrderType() == OP_BUY)
    { 
@@ -320,43 +264,6 @@ void setEntry()
    if (gPoint != 0) { 
       vTP = MathRound(vTP / gPoint);
       vSL = MathRound(vSL / gPoint);
-   }
-
-   // show in log
-   if (gShow == 1) {
-      
-      PrintFormat("%s %s " + 
-            "%s %s " + 
-            "%s %s " + 
-            "%s %s " + 
-            "%s %s " +  
-            "%s %s " + 
-            "%s %s " +  
-            "%s %s " + 
-            "%s %s " + 
-            "%s %s " + 
-            "%s %s " +  
-            "%s %s " + 
-            "%s %s " +  
-            "%s %s " + 
-            "%s" + 
-            "",
-               sCol, sCSV, 
-               (string)OrderSymbol(), sCSV, 
-               (string)OrderTicket(), sCSV, 
-               (string)OrderOpenTime(), sCSV, 
-               (string)OrderCloseTime(), sCSV, 
-               (string)OrderOpenPrice(), sCSV, 
-               (string)OrderClosePrice(), sCSV, 
-               (string)OrderTakeProfit(), sCSV,
-               (string)OrderStopLoss(), sCSV,
-               (string)OrderComment(), sCSV, 
-               t1, sCSV, 
-               (string)vTP, sCSV,
-               (string)vSL, sCSV,
-               DoubleToString(OrderProfit(), 2), sCSV,
-               gIssue
-      );
    }
 
    if (sHTML)
@@ -380,6 +287,28 @@ void setEntry()
 
       if (gShow == 1) { gHTMLe += vHTML; }
       if (gShow == 2) { gHTMLeq += vHTML; }
+   }
+
+   if (sCSV)
+   {
+      vCSV += sSep + (string)OrderSymbol();
+      vCSV += sSep + (string)OrderTicket();
+      vCSV += sSep + (string)OrderOpenTime();
+      vCSV += sSep + (string)OrderCloseTime();
+      vCSV += sSep + (string)OrderOpenPrice();
+      vCSV += sSep + (string)OrderClosePrice();
+      vCSV += sSep + (string)OrderTakeProfit();
+      vCSV += sSep + (string)OrderStopLoss();
+      vCSV += sSep + (string)OrderComment();
+      vCSV += sSep + t1;
+      vCSV += sSep + (string)vTP;
+      vCSV += sSep + (string)vSL;
+      vCSV += sSep + DoubleToString(OrderProfit(), 2);
+      vCSV += sSep + gIssue;
+      vCSV += sSep + "\n";
+
+      if (gShow == 1) { gCSVe += vCSV; }
+      if (gShow == 2) { gCSVeq += vCSV; }
    }
 }
 
@@ -480,7 +409,7 @@ void setHTMLPage()
                vHTML += "this may means the broker cheats you or you have totally wrong strategy ";
                vHTML += "(e.g. scalping at not very liquid market maker or index). To see more detailed report ";
                vHTML += "activate feature by adding for each order exact comment format e.g. ";
-               vHTML += ";requested_open_price; to compare with OrderOpenPrice() later.</h3>";
+               vHTML += ":requested_open_price: to compare with OrderOpenPrice() later.</h3>";
    
                vHTML += "<table>"+"\n";
                   vHTML += vHead;
@@ -530,6 +459,119 @@ void setHTMLFile()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
+// Set summary in CSV format
+// -----------------------------------------------------------------------------------------------------------------------
+
+string setSummaryCSV()
+{
+   string vCSV = "", vArr[];
+
+   StringSplit(gSum, StringGetCharacter("$", 0), vArr);
+
+   vCSV += "\n" + vArr[0] + "\n\n";
+   
+   for (int i=1; i<ArraySize(vArr); i+=3)
+   {
+      vCSV += sSep + vArr[i];
+      vCSV += sSep + vArr[i+1];
+      vCSV += sSep + vArr[i+2];
+      vCSV += sSep + "\n";
+   }
+
+   return vCSV;
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Create CSV page
+// -----------------------------------------------------------------------------------------------------------------------
+
+void setCSVPage()
+{
+   string vCSV = "", vHead = "";
+
+   vHead += "\n";
+   vHead += sSep + "Symbol";
+   vHead += sSep + "Ticket";
+   vHead += sSep + "Open time";
+   vHead += sSep + "Closed time";
+   vHead += sSep + "Open price";
+   vHead += sSep + "Closed price";
+   vHead += sSep + "TP price";
+   vHead += sSep + "SL price";
+   vHead += sSep + "Comment";
+   vHead += sSep + "Type";
+   vHead += sSep + "TP points";
+   vHead += sSep + "SL points";
+   vHead += sSep + "Profit";
+   vHead += sSep + "Issue";
+   vHead += sSep + "\n";
+         
+   vCSV += "Account: " + (string)AccountNumber() + ", " + (string)AccountCompany() + "\n";
+   
+   vCSV += setSummaryCSV() + "\n";
+
+   vCSV += "\n" + "Orders with issues closed by broker:" + "\n";
+   vCSV += vHead;
+   vCSV += gCSVe;
+   vCSV += "\n";
+   vCSV += "\n";
+            
+   if (!gHasOpen)
+   {
+      vCSV += "Orders closed by broker with expected price for TP or SL:" + "\n\n";
+
+      vCSV += "This table below shows orders closed by broker with correct TP or SL price. " + "\n";
+      vCSV += "If there is incorrect TP or SL size, it means there was open price slip and broker " + "\n";
+      vCSV += "not gaves you slip points back at the end of order. You need to verify the " + "\n";
+      vCSV += "TP and SL size on your own, if you remember how many points it should be. " + "\n";
+      vCSV += "If there is not so many points this is natural thing at not very liquid market but " + "\n";
+      vCSV += "if there are many orders with big difference and nothing with points back at the table above " + "\n";
+      vCSV += "this may means the broker cheats you or you have totally wrong strategy " + "\n";
+      vCSV += "(e.g. scalping at not very liquid market maker or index). To see more detailed report " + "\n";
+      vCSV += "activate feature by adding for each order exact comment format e.g. " + "\n";
+      vCSV += ":requested_open_price: to compare with OrderOpenPrice() later." + "\n";
+
+      vCSV += "\n";
+      vCSV += vHead;
+      vCSV += gCSVeq;
+      vCSV += "\n";
+   }
+
+   vCSV += "Report generated by: ";
+   vCSV += "\"https://github.com/dprojects/MetaTrader-tools/";
+   vCSV += "blob/master/MQL4/Scripts/DL_check_broker.mq4\""+"\n";
+   
+   gCSV = vCSV;
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Save CSV output to file
+// -----------------------------------------------------------------------------------------------------------------------
+
+void setCSVFile() 
+{
+   int    vFile = 0;
+   string vFileName = "orders_issues_" + (string)AccountNumber() + ".csv";
+   string vFileDir = TerminalInfoString(TERMINAL_DATA_PATH) + "\\MQL4\\Files\\";
+   
+   setCSVPage();
+
+   vFile = FileOpen(vFileName, FILE_WRITE | FILE_TXT);
+   
+   if (vFile != INVALID_HANDLE)
+   {
+      FileWrite(vFile, gCSV);
+      FileClose(vFile);
+      
+      Print(sCol + "The CSV report has been created at:" + vFileDir + vFileName);
+   }
+   else 
+   {
+      Print("File open failed, error ",GetLastError());
+   }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
 // Get bigger TP or SL (closed too late)
 // -----------------------------------------------------------------------------------------------------------------------
 
@@ -541,7 +583,7 @@ void getBigger()
    // set open slip
    if (gIsOpen)
    {
-      k = OrderComment(); StringSplit(k, StringGetCharacter(";",0), kExt); vReq = (double)kExt[1];
+      k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt); vReq = (double)kExt[1];
       if (OrderOpenPrice() != vReq)
       {
          if (gPoint != 0)
@@ -733,7 +775,7 @@ void getSmaller()
    // set open slip
    if (gIsOpen)
    {
-      k = OrderComment(); StringSplit(k, StringGetCharacter(";",0), kExt); vReq = (double)kExt[1];
+      k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt); vReq = (double)kExt[1];
       if (OrderOpenPrice() != vReq)
       {
          if (gPoint != 0)
@@ -1027,7 +1069,7 @@ void getOpenSlip()
 
    // set open slip size
    k = OrderComment();
-   StringSplit(k, StringGetCharacter(";",0), kExt);
+   StringSplit(k, StringGetCharacter(":",0), kExt);
    vReq = (double)kExt[1];
    
    if (OrderOpenPrice() != vReq)
@@ -1136,7 +1178,7 @@ void OnStart()
       gPoint = MarketInfo(OrderSymbol(), MODE_POINT);
       
       // check if there is open feature active in comment
-      k = OrderComment(); if (StringFind(k, ";", 0) != -1) { gIsOpen = true; gHasOpen = true; }
+      k = OrderComment(); if (StringFind(k, ":", 0) != -1) { gIsOpen = true; gHasOpen = true; }
       
       getBigger();         // bigger TP or SL
       getSmaller();        // smaller TP or SL
@@ -1155,8 +1197,9 @@ void OnStart()
    }
    
    setSummary();  // calculate final result
-   showSummary(); // show summary in log
    
-   // save HTML output to file 
-   if (sHTML) { setHTMLFile(); }
+   if (sHTML) { setHTMLFile(); }  // save HTML output to file 
+   if (sCSV) { setCSVFile(); }    // save CSV output to file
+
+   Print(sLine);
 }
