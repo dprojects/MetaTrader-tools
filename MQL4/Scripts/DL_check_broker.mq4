@@ -102,14 +102,14 @@ void setSummary()
       gSum += "";
       gSum += vDataSep;
 
-      gSum += (string)gOpenEarnVal + " " + vCurrency;
+      gSum += DoubleToStr(gOpenEarnVal, 2) + " " + vCurrency;
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
       gSum += "Earned money due to price slip.";
       gSum += vDataSep;
 
-      gSum += (string)gOpenLossVal + " " + vCurrency;
+      gSum += DoubleToStr(gOpenLossVal, 2) + " " + vCurrency;
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
