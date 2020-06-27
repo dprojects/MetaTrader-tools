@@ -56,6 +56,7 @@ void setSummary()
 {
    string vR = "";
    string vDataSep = "$";
+   string vCurrency = AccountCurrency();
 
    // Set open feature description
 
@@ -101,18 +102,18 @@ void setSummary()
       gSum += "";
       gSum += vDataSep;
 
-      gSum += (string)gOpenEarnVal;
+      gSum += (string)gOpenEarnVal + " " + vCurrency;
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
-      gSum += "Earn money because of slip";
+      gSum += "Earned money due to price slip.";
       gSum += vDataSep;
 
-      gSum += (string)gOpenLossVal;
+      gSum += (string)gOpenLossVal + " " + vCurrency;
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
-      gSum += "Loss money because of slip";
+      gSum += "Lost money due to price slip.";
       gSum += vDataSep;
 
       // Open, TP, SL slip
@@ -128,28 +129,28 @@ void setSummary()
       gSum += vDataSep;
       gSum += "( honest broker )";
       gSum += vDataSep;
-      gSum += "Broker returned points at the end";
+      gSum += "Broker returned points at the end.";
       gSum += vDataSep;
 
       gSum += (string)gOpenEarn;
       gSum += vDataSep;
       gSum += "( generous broker )";
       gSum += vDataSep;
-      gSum += "Broker returned more points at the end";
+      gSum += "Broker returned too many points at the end.";
       gSum += vDataSep;
 
       gSum += (string)gOpenLoss;
       gSum += vDataSep;
       gSum += "( bad broker )";
       gSum += vDataSep;
-      gSum += "Broker not returned points at the end";
+      gSum += "Broker not returned points at the end.";
       gSum += vDataSep;
 
       gSum += (string)gOpenSlip;
       gSum += vDataSep;
       gSum += "( not very liquid market, real )";
       gSum += vDataSep;
-      gSum += "Broker opened order with different open price";
+      gSum += "Broker opened order with different open price than requested by trader.";
       gSum += vDataSep;
    }
    else
@@ -167,28 +168,28 @@ void setSummary()
       gSum += vDataSep;
       gSum += "( good broker )";
       gSum += vDataSep;
-      gSum += "Broker closed order with bigger TakeProfit";
+      gSum += "Broker closed order with bigger TakeProfit.";
       gSum += vDataSep;
    
       gSum += (string)gCutSLB;
       gSum += vDataSep;
       gSum += "( good broker )";
       gSum += vDataSep;
-      gSum += "Broker closed order with smaller StopLoss";
+      gSum += "Broker closed order with smaller StopLoss.";
       gSum += vDataSep;
 
       gSum += (string)gBiggerSL;
       gSum += vDataSep;
       gSum += "( bad broker )";
       gSum += vDataSep;
-      gSum += "Orders closed by broker with bigger StopLoss";
+      gSum += "Broker closed order with bigger StopLoss.";
       gSum += vDataSep;
    
       gSum += (string)gCutTPB;
       gSum += vDataSep;
       gSum += "( bad broker )";
       gSum += vDataSep;
-      gSum += "Orders closed by broker with smaller TakeProfit";
+      gSum += "Broker closed order with smaller TakeProfit.";
       gSum += vDataSep;
    }
 
@@ -198,21 +199,21 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( very liquid market, demo )";
    gSum += vDataSep;
-   gSum += "Broker closed order with TakeProfit expected by trader";
+   gSum += "Broker closed order with TakeProfit requested by trader.";
    gSum += vDataSep;
 
    gSum += (string)gSLEqual;
    gSum += vDataSep;
    gSum += "( very liquid market, demo )";
    gSum += vDataSep;
-   gSum += "Broker closed order with StopLoss expected by trader";
+   gSum += "Broker closed order with StopLoss requested by trader.";
    gSum += vDataSep;
    
    gSum += (string)gBrokerClosed;
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
-   gSum += "All orders closed by broker with StopLoss or TakeProfit";
+   gSum += "All orders closed by broker with StopLoss or TakeProfit.";
    gSum += vDataSep;
 
    // Quick orders 
@@ -228,14 +229,14 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( good for scalpers & robots )";
    gSum += vDataSep;
-   gSum += "Quick orders with earn ( profit > 0 )";
+   gSum += "Quick orders with earn ( profit > 0 ).";
    gSum += vDataSep;
 
    gSum += (string)gQuickLoss;
    gSum += vDataSep;
    gSum += "( not good for scalpers & robots )";
    gSum += vDataSep;
-   gSum += "Quick orders with loss ( profit < 0 )";
+   gSum += "Quick orders with loss ( profit < 0 ).";
    gSum += vDataSep;
 
    // Day trading
@@ -251,14 +252,14 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( good for day-traders )";
    gSum += vDataSep;
-   gSum += "Day-trading orders with earn ( profit > 0 )";
+   gSum += "Day-trading orders with earn ( profit > 0 ).";
    gSum += vDataSep;
 
    gSum += (string)gDTLoss;
    gSum += vDataSep;
    gSum += "( not good for day-traders )";
    gSum += vDataSep;
-   gSum += "Day-trading orders with loss ( profit < 0 )";
+   gSum += "Day-trading orders with loss ( profit < 0 ).";
    gSum += vDataSep;
 
    // Investing
@@ -274,14 +275,14 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( good for investors )";
    gSum += vDataSep;
-   gSum += "Long-time orders with earn ( profit > 0 )";
+   gSum += "Long-time orders with earn ( profit > 0 ).";
    gSum += vDataSep;
 
    gSum += (string)gInvestLoss;
    gSum += vDataSep;
    gSum += "( not good for investors )";
    gSum += vDataSep;
-   gSum += "Long-time orders with loss ( profit < 0 )";
+   gSum += "Long-time orders with loss ( profit < 0 ).";
    gSum += vDataSep;
 
    // Trader emotions
@@ -295,16 +296,16 @@ void setSummary()
 
    gSum += (string)gCutSLT;
    gSum += vDataSep;
-   gSum += "( good strategy )";
+   gSum += "( good control )";
    gSum += vDataSep;
-   gSum += "Orders closed by trader before StopLoss activation ( cut loss )";
+   gSum += "Orders closed by trader before StopLoss activation ( cut loss ).";
    gSum += vDataSep;
 
    gSum += (string)gCutTPT;
    gSum += vDataSep;
-   gSum += "( bad strategy )";
+   gSum += "( out of control )";
    gSum += vDataSep;
-   gSum += "Orders closed by trader before TakeProfit activation ( cut profit )";
+   gSum += "Orders closed by trader before TakeProfit activation ( cut profit ).";
    gSum += vDataSep;
 
    // All orders
@@ -320,21 +321,21 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( secure strategy )";
    gSum += vDataSep;
-   gSum += "All orders with StopLoss or TakeProfit";
+   gSum += "All orders with StopLoss or TakeProfit.";
    gSum += vDataSep;
 
    gSum += (string)gNotSet;
    gSum += vDataSep;
    gSum += "( risky strategy )";
    gSum += vDataSep;
-   gSum += "All orders without StopLoss or TakeProfit";
+   gSum += "All orders without StopLoss or TakeProfit.";
    gSum += vDataSep;
 
    gSum += (string)gActivated;
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
-   gSum += "All orders (realized except cancelled and pending )";
+   gSum += "All orders (realized except cancelled and pending ).";
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
