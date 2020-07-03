@@ -40,7 +40,7 @@ int    gShow = 0;
 bool   gHasOpen = false, gIsOpen = false;
 
 // calculation
-double gOpenEarnVal = 0, gOpenLossVal = 0, gGoodRatio = 0;
+double gOpenEarnVal = 0, gOpenLossVal = 0;
 double gPoint = 0;
 
 // content
@@ -54,6 +54,7 @@ string gIssue = "", gSum = "", gOpenInfo  = "";
 
 void setSummary()
 {
+   double vGoodRatio = 0, vAllRatio = 0;
    string vR = "";
    string vDataSep = "$";
    string vCurrency = AccountCurrency();
@@ -73,16 +74,16 @@ void setSummary()
 
    // Calculate final ratio
 
-   gBrokerClosed = gOpenHonest + gOpenEarn + gBiggerTP + gCutSLB + gTPEqual + gSLEqual + gOpenLoss + gBiggerSL + gCutTPB;
-   gGoodRatio = ( (double)(gOpenHonest + gOpenEarn + gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / gBrokerClosed ) * 100;
+   vAllRatio =    (double)(gOpenHonest + gOpenEarn + gBiggerTP + gCutSLB + gTPEqual + gSLEqual + gOpenLoss + gBiggerSL + gCutTPB);
+   vGoodRatio = ( (double)(gOpenHonest + gOpenEarn + gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / vAllRatio ) * 100;
 
-   if (gGoodRatio == 100) { vR = "DEMO ?"; } 
-   else if (gGoodRatio > 80) { vR = "VERY GOOD"; } 
-   else if (gGoodRatio > 50) { vR = "GOOD"; }
-   else if (gGoodRatio > 20) { vR = "BAD"; }
+   if (vGoodRatio == 100) { vR = "DEMO ?"; } 
+   else if (vGoodRatio > 80) { vR = "VERY GOOD"; } 
+   else if (vGoodRatio > 50) { vR = "GOOD"; }
+   else if (vGoodRatio > 20) { vR = "BAD"; }
    else { vR = "VERY BAD"; }
 
-   vR += "   ( " + DoubleToStr(gGoodRatio, 0) + "% ) ";
+   vR += "   ( " + DoubleToStr(vGoodRatio, 0) + "% ) ";
  
    // Final ratio
    
@@ -1255,6 +1256,16 @@ void getOpenSlip()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
+// Get orders closed by Broker
+// -----------------------------------------------------------------------------------------------------------------------
+
+void getByBroker() 
+{
+   string k = OrderComment(); 
+   if (StringFind(k, "[tp]", 0) != -1 || StringFind(k, "[sl]", 0) != -1) { gBrokerClosed++; }
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
 // MAIN
 // -----------------------------------------------------------------------------------------------------------------------
 
@@ -1292,7 +1303,8 @@ void OnStart()
          getOrderTime();   // quick, day-trade, long-time orders
          getEqual();       // expected TP or SL price
          getOpenSlip();    // open slip with expected TP or SL price
-         
+         getByBroker();    // all orders closed by Broker
+
          gActivated++;     // all olders but only activated
       }
       if (gShow == 1 || gShow == 2) { setEntry(); }  // issues
