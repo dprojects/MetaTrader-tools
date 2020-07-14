@@ -31,8 +31,10 @@ string sLine   = sCol +
 // -----------------------------------------------------------------------------------------------------------------------
 
 // counters
-int    gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gQuickEarn = 0, gOpenEarn = 0, gDTEarn = 0, gInvestEarn = 0;
-int    gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gQuickLoss = 0, gOpenLoss = 0, gDTLoss = 0, gInvestLoss = 0;;
+int    gBiggerTP = 0, gSLEqual = 0, gCutSLT = 0, gCutSLB = 0, gOpenEarn = 0;
+int    gBiggerSL = 0, gTPEqual = 0, gCutTPT = 0, gCutTPB = 0, gOpenLoss = 0;
+int    gQuickEarn = 0, gDTEarn = 0, gInvestEarn = 0, gHedgeEarn = 0;
+int    gQuickLoss = 0, gDTLoss = 0, gInvestLoss = 0, gHedgeLoss = 0;
 int    gActivated = 0, gSet = 0, gNotSet = 0, gOpenSlip = 0, gOpenHonest = 0, gBrokerClosed = 0;
 
 // switches
@@ -96,7 +98,7 @@ void setSummary()
    {
       // Earn & Loss money
 
-      gSum += "Earn & Loss money:";
+      gSum += "Earn & Loss money :";
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
@@ -117,9 +119,18 @@ void setSummary()
       gSum += "Lost money due to price slip.";
       gSum += vDataSep;
 
+      // separator
+
+      gSum += "&nbsp;";
+      gSum += vDataSep;
+      gSum += "";
+      gSum += vDataSep;
+      gSum += "";
+      gSum += vDataSep;
+
       // Open, TP, SL slip
 
-      gSum += "Open, TP, SL slip:";
+      gSum += "Open, TP, SL slip :";
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
@@ -158,7 +169,7 @@ void setSummary()
    {
       // Open, TP, SL slip
 
-      gSum += "Open, TP, SL slip:";
+      gSum += "Open, TP, SL slip :";
       gSum += vDataSep;
       gSum += "";
       gSum += vDataSep;
@@ -194,32 +205,9 @@ void setSummary()
       gSum += vDataSep;
    }
 
-   // All closed by broker
-
-   gSum += (string)gTPEqual;
-   gSum += vDataSep;
-   gSum += "( very liquid market, demo )";
-   gSum += vDataSep;
-   gSum += "Broker closed order with TakeProfit requested by trader.";
-   gSum += vDataSep;
-
-   gSum += (string)gSLEqual;
-   gSum += vDataSep;
-   gSum += "( very liquid market, demo )";
-   gSum += vDataSep;
-   gSum += "Broker closed order with StopLoss requested by trader.";
-   gSum += vDataSep;
-   
-   gSum += (string)gBrokerClosed;
-   gSum += vDataSep;
-   gSum += "";
-   gSum += vDataSep;
-   gSum += "All orders closed by broker with StopLoss or TakeProfit.";
-   gSum += vDataSep;
-
    // Quick orders 
 
-   gSum += "Quick orders:";
+   gSum += "Quick orders :";
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
@@ -242,7 +230,7 @@ void setSummary()
 
    // Day trading
 
-   gSum += "Day-trading:";
+   gSum += "Day-trading :";
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
@@ -265,7 +253,7 @@ void setSummary()
 
    // Investing
 
-   gSum += "Investing:";
+   gSum += "Investing :";
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
@@ -286,9 +274,35 @@ void setSummary()
    gSum += "Long-time orders with loss ( profit < 0 ).";
    gSum += vDataSep;
 
+   if (gHasOpen) 
+   {
+      // hedging
+
+      gSum += "Hedging :";
+      gSum += vDataSep;
+      gSum += "";
+      gSum += vDataSep;
+      gSum += "";
+      gSum += vDataSep;
+
+      gSum += (string)gHedgeEarn;
+      gSum += vDataSep;
+      gSum += "( good for hedging )";
+      gSum += vDataSep;
+      gSum += "Hedging orders with earn ( profit > 0 ).";
+      gSum += vDataSep;
+   
+      gSum += (string)gHedgeLoss;
+      gSum += vDataSep;
+      gSum += "( not good for hedging )";
+      gSum += vDataSep;
+      gSum += "Hedging orders with loss ( profit < 0 ).";
+      gSum += vDataSep;
+   }
+
    // Trader emotions
 
-   gSum += "Trader emotions:";
+   gSum += "Trader emotions :";
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
@@ -309,9 +323,64 @@ void setSummary()
    gSum += "Orders closed by trader before TakeProfit activation ( cut profit ).";
    gSum += vDataSep;
 
+   // separator
+
+   gSum += "&nbsp;";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+
+   // All - closed by broker
+
+   gSum += "All - closed by broker :";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+
+   gSum += (string)gTPEqual;
+   gSum += vDataSep;
+   gSum += "( very liquid market, demo )";
+   gSum += vDataSep;
+   gSum += "All orders closed by broker with TakeProfit requested by trader.";
+   gSum += vDataSep;
+
+   gSum += (string)gSLEqual;
+   gSum += vDataSep;
+   gSum += "( very liquid market, demo )";
+   gSum += vDataSep;
+   gSum += "All orders closed by broker with StopLoss requested by trader.";
+   gSum += vDataSep;
+   
+   gSum += (string)gBrokerClosed;
+   gSum += vDataSep;
+   gSum += "( market liquidity, demo or real )";
+   gSum += vDataSep;
+   gSum += "All orders closed by broker ( via StopLoss or TakeProfit ).";
+   gSum += vDataSep;
+
+   // All - closed by trader
+
+   gSum += "All - closed by trader :";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+
+   gSum += (string)(gActivated - gBrokerClosed);
+   gSum += vDataSep;
+   gSum += "";
+   gSum += vDataSep;
+   gSum += "All orders closed by trader.";
+   gSum += vDataSep;
+
    // All orders
 
-   gSum += "All orders:";
+   gSum += "All orders :";
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
@@ -322,21 +391,21 @@ void setSummary()
    gSum += vDataSep;
    gSum += "( secure strategy )";
    gSum += vDataSep;
-   gSum += "All orders with StopLoss or TakeProfit.";
+   gSum += "All realized orders with StopLoss or TakeProfit.";
    gSum += vDataSep;
 
    gSum += (string)gNotSet;
    gSum += vDataSep;
    gSum += "( risky strategy )";
    gSum += vDataSep;
-   gSum += "All orders without StopLoss or TakeProfit.";
+   gSum += "All realized orders without StopLoss or TakeProfit.";
    gSum += vDataSep;
 
    gSum += (string)gActivated;
    gSum += vDataSep;
    gSum += "";
    gSum += vDataSep;
-   gSum += "All orders (realized except cancelled and pending ).";
+   gSum += "All realized orders ( except cancelled, currently pending or active ).";
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -1153,6 +1222,30 @@ void getOrderTime()
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
+// Get orders with hedging
+// -----------------------------------------------------------------------------------------------------------------------
+
+void getHedge() 
+{
+   string k = "", kExt[];
+   string vOrderType = "";
+   
+   // exit if open feature not available in comment
+   if (!gIsOpen) { return; }
+
+   // set comment
+   k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
+   
+   // set hedge
+   vOrderType = (string)kExt[5]; 
+   if ( StringFind(vOrderType, "H", 0) != -1 ) 
+   {
+      if (OrderProfit() > 0) { gHedgeEarn++; }
+      if (OrderProfit() < 0) { gHedgeLoss++; }
+   } 
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
 // Orders with open price slip. In fact you can't predict if the different open price 
 // will be good or bad in the future.
 // -----------------------------------------------------------------------------------------------------------------------
@@ -1304,6 +1397,7 @@ void OnStart()
          getEqual();       // expected TP or SL price
          getOpenSlip();    // open slip with expected TP or SL price
          getByBroker();    // all orders closed by Broker
+         getHedge();       // hedging orders
 
          gActivated++;     // all olders but only activated
       }
