@@ -54,10 +54,10 @@ double gBiggerTPV = 0, gBiggerSLV = 0, gCutTPBV = 0, gCutSLBV = 0;
 
 // switches
 int    gShow = 0;
-bool   gHasOpen = false, gIsOpen = false;
+bool   gHadOpenFeature = false, gIsOpenFeature = false;
 
 // calculation
-double gPoint = 0;
+double gPoint = 0, gOpenReq = 0, gPointVal = 0, gOSlip = 0, gOSlipAbs = 0;
 string gCurrency = AccountCurrency();
 
 // content
@@ -66,6 +66,52 @@ string gCSV = "", gCSVe = "", gCSVeq = "";
 
 // summary
 string gIssue = "", gSum = "", gOpenInfo  = "";
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Set global variables
+// -----------------------------------------------------------------------------------------------------------------------
+
+void setGlobals()
+{
+   double vProfitPoints = 0;
+   string kExt[];
+   string k = OrderComment();
+
+   // reset values for each order
+   gShow = 0; gIssue = ""; gIsOpenFeature = false;
+
+   // for old markets, need to open chart to load data to get it worked
+   gPoint = MarketInfo(OrderSymbol(), MODE_POINT);
+   
+   // check if there is open feature active in comment
+   if (StringFind(k, ":", 0) != -1) { gIsOpenFeature = true; gHadOpenFeature = true; }
+
+   // set open slip
+   if (gIsOpenFeature)
+   {
+      StringSplit(k, StringGetCharacter(":", 0), kExt); 
+
+      gOpenReq = (double)kExt[1];
+      gPointVal = (double)kExt[2];
+
+      if (OrderOpenPrice() != gOpenReq)
+      {
+         if (gPoint != 0)
+         { 
+            gOSlip = MathRound((OrderOpenPrice() - gOpenReq) / gPoint);
+            gOSlipAbs = MathAbs(gOSlip);
+         }
+      }      
+   }
+   else
+   {
+      if (gPoint != 0)
+      {
+         vProfitPoints = MathRound( MathAbs(OrderClosePrice() - OrderOpenPrice()) / gPoint );
+         gPointVal = MathAbs(OrderProfit()) / vProfitPoints;
+      }      
+   }
+}
 
 // -----------------------------------------------------------------------------------------------------------------------
 // Set final summary
@@ -92,15 +138,15 @@ void setSummary()
    gOpenInfo += ":requested_open_price:pointvalue_for_order: to compare with OrderOpenPrice() later.";
 
    // Calculate final ratio
-   if (gHasOpen) 
+   if (gHadOpenFeature) 
    {
-      vRatioA =    gOpenHonest + gOpenEarn + gOpenLoss;
-      vRatioG = ( (gOpenHonest + gOpenEarn) / vRatioA ) * 100;
+      vRatioA =    gOpenHonest + gOpenEarn + gTPEqual + gSLEqual + gOpenLoss;
+      vRatioG = ( (gOpenHonest + gOpenEarn + gTPEqual + gSLEqual) / vRatioA ) * 100;
    }
    else
    {
-      vRatioA =    gBiggerTP + gCutSLB + gBiggerSL + gCutTPB;
-      vRatioG = ( (gBiggerTP + gCutSLB) / vRatioA ) * 100;
+      vRatioA =    gBiggerTP + gCutSLB + gTPEqual + gSLEqual + gBiggerSL + gCutTPB;
+      vRatioG = ( (gBiggerTP + gCutSLB + gTPEqual + gSLEqual) / vRatioA ) * 100;
    }
 
    if (vRatioG == 100) { vR = "DEMO ?"; } 
@@ -133,7 +179,7 @@ void setSummary()
       
    // Open feature
 
-   if (gHasOpen) 
+   if (gHadOpenFeature) 
    {
       // Open, TP, SL slip
 
@@ -367,7 +413,7 @@ void setSummary()
    else                                      { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All long-term orders.";
 
-   if (gHasOpen) 
+   if (gHadOpenFeature) 
    {
       // hedging
 
@@ -697,7 +743,7 @@ void setHTMLPage()
                vHTML += "</tbody>" + "\n";
             vHTML += "</table>" + "\n";
             
-            if (!gHasOpen)
+            if (!gHadOpenFeature)
             {
                vHTML += "<h2>Orders closed by broker with expected price for TP or SL:</h2>";
    
@@ -810,7 +856,7 @@ void setCSVPage()
    vCSV += vHead;
    vCSV += gCSVe;
             
-   if (!gHasOpen)
+   if (!gHadOpenFeature)
    {
       vCSV += "\n\n";
 
@@ -862,28 +908,8 @@ void setCSVFile()
 
 void getBigger() 
 {
-   double vCSlip = 0, vOSlip = 0, vOSlipV = 0, vOSlipAbs = 0, vOpenReq = 0;
-   double vPointVal = 0, vPointValCalc = 0, vTP = 0, vSL = 0;
-   string k = "", kExt[];
+   double vCSlip = 0, vOSlipV = 0;
    
-   // set open slip
-   if (gIsOpen)
-   {
-      k = OrderComment(); StringSplit(k, StringGetCharacter(":", 0), kExt);
-      
-      vOpenReq = (double)kExt[1];
-      vPointVal = (double)kExt[2];
-
-      if (OrderOpenPrice() != vOpenReq)
-      {
-         if (gPoint != 0)
-         { 
-            vOSlip = MathRound((OrderOpenPrice() - vOpenReq) / gPoint);
-            vOSlipAbs = MathAbs(vOSlip);
-         }
-      }
-   }
-
    if (OrderType() == OP_BUY)
    {    
       // LOSS: bigger SL (SL slip)
@@ -892,49 +918,48 @@ void getBigger()
          vCSlip = OrderStopLoss() - OrderClosePrice();
          if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
          
-         if (gIsOpen)
+         if (gIsOpenFeature)
          {
-            if (vOSlip > 0) {
+            if (gOSlip > 0) {
+               
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * (vCSlip + vOSlipAbs)); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN+" + (string)vOSlipAbs + " & SL+" + (string)vCSlip + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * (vCSlip + gOSlipAbs)); gOpenLossV += vOSlipV;
+               
+               gIssue += "OPEN+" + (string)gOSlipAbs + " & SL+" + (string)vCSlip + " "; 
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                gShow = 1; 
             }
-            if (vOSlip < 0) {
-               if (vOSlipAbs == vCSlip) 
-               {
-                  gIssue += "honest broker, returned points: ";
-                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-               }
-               if (vOSlipAbs < vCSlip)
-               {
-                  gIssue += "bad, loss: ";
-                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenLossV += vOSlipV;
-               }
-               if (vOSlipAbs > vCSlip)
-               {
-                  gIssue += "good, earn: ";
-                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
-               }
-               gIssue += "OPEN-" + (string)vOSlipAbs + " & SL+" + (string)vCSlip + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+            if (gOSlip < 0) {
+               
+               gIssue += "OPEN-" + (string)gOSlipAbs + " & SL+" + (string)vCSlip + " "; 
                gShow = 1;
+
+               if (gOSlipAbs == vCSlip) 
+               {
+                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                  gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;                  
+               }
+               if (gOSlipAbs < vCSlip)
+               {
+                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenLossV += vOSlipV;
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs > vCSlip)
+               {
+                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
             }
          }
          else 
          {
-            if (gPoint != 0)
-            {
-               vSL = MathRound( MathAbs(OrderStopLoss() - OrderOpenPrice()) / gPoint );
-               vPointValCalc = MathAbs(OrderProfit()) / vSL;
-            }
-            gBiggerSL++; 
-            gBiggerSLP += OrderProfit() + OrderSwap();
-            gBiggerSLV += vPointValCalc * vCSlip;
-            gIssue += "slip SL+" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+            gBiggerSL++; gBiggerSLP += OrderProfit() + OrderSwap();
+            gBiggerSLV += gPointVal * vCSlip;
+
+            gIssue += "slip SL+" + (string)vCSlip + " ";
+            gIssue += "=> loss: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
             gShow = 1;
          }
       }
@@ -945,51 +970,48 @@ void getBigger()
          vCSlip = OrderClosePrice() - OrderTakeProfit(); 
          if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-         if (gIsOpen)
+         if (gIsOpenFeature)
          {
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
-               if (vOSlipAbs == vCSlip) 
-               {
-                  gIssue += "honest broker, returned points: ";
-                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-               }
-               if (vOSlipAbs > vCSlip)
-               {
-                  gIssue += "bad, loss: ";
-                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
-               }
-               if (vOSlipAbs < vCSlip)
-               {
-                  gIssue += "good, earn: ";
-                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenEarnV += vOSlipV;
-               }
-               gIssue += "OPEN+" + (string)vOSlipAbs + " & TP+" + (string)vCSlip + " ";
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               gIssue += "OPEN+" + (string)gOSlipAbs + " & TP+" + (string)vCSlip + " ";
                gShow = 1;
+
+               if (gOSlipAbs == vCSlip) 
+               {
+                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                  gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs > vCSlip)
+               {
+                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs < vCSlip)
+               {
+                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenEarnV += vOSlipV;
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
             }
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: " + "OPEN-" + (string)vOSlipAbs + " & TP+" + (string)vCSlip + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN-" + (string)gOSlipAbs + " & TP+" + (string)vCSlip + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                gShow = 1;
             }
          }
          else 
          {
-            if (gPoint != 0)
-            {
-               vTP = MathRound( MathAbs(OrderTakeProfit() - OrderOpenPrice()) / gPoint );
-               vPointValCalc = MathAbs(OrderProfit()) / vTP;
-            }
-            gBiggerTP++; 
-            gBiggerTPP += OrderProfit() + OrderSwap(); 
-            gBiggerTPV += vPointValCalc * vCSlip;
-            gIssue += "slip TP+" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+            gBiggerTP++; gBiggerTPP += OrderProfit() + OrderSwap(); 
+            gBiggerTPV += gPointVal * vCSlip;
+
+            gIssue += "slip TP+" + (string)vCSlip + " ";
+            gIssue += "=> earn: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
             gShow = 1;
          }
       }
@@ -1003,51 +1025,48 @@ void getBigger()
          vCSlip = OrderClosePrice() - OrderStopLoss();
          if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-         if (gIsOpen)
+         if (gIsOpenFeature)
          {
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
-               if (vOSlipAbs == vCSlip) 
-               {
-                  gIssue += "honest broker, returned points: ";
-                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-               }
-               if (vOSlipAbs < vCSlip)
-               {
-                  gIssue += "bad, loss: ";
-                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenLossV += vOSlipV;
-               }
-               if (vOSlipAbs > vCSlip)
-               {
-                  gIssue += "good, earn: ";
-                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
-               }
-               gIssue += "OPEN+" + (string)vOSlipAbs + " & SL+" + (string)vCSlip + " ";
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               gIssue += "OPEN+" + (string)gOSlipAbs + " & SL+" + (string)vCSlip + " ";
                gShow = 1;
+
+               if (gOSlipAbs == vCSlip) 
+               {
+                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                  gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs < vCSlip)
+               {
+                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenLossV += vOSlipV;
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs > vCSlip)
+               {
+                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
+                  gIssue += "earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }               
             }
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN-" + (string)vOSlipAbs + " & SL+" + (string)vCSlip + " ";
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+               vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
+
+               gIssue += "OPEN-" + (string)gOSlipAbs + " & SL+" + (string)vCSlip + " ";
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
                gShow = 1; 
             }
          }
          else 
          {
-            if (gPoint != 0)
-            {
-               vSL = MathRound( MathAbs(OrderStopLoss() - OrderOpenPrice()) / gPoint );
-               vPointValCalc = MathAbs(OrderProfit()) / vSL;
-            }
-            gBiggerSL++;
-            gBiggerSLP += OrderProfit() + OrderSwap(); 
-            gBiggerSLV += vPointValCalc * vCSlip;
-            gIssue += "slip SL+" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+            gBiggerSL++; gBiggerSLP += OrderProfit() + OrderSwap(); 
+            gBiggerSLV += gPointVal * vCSlip;
+
+            gIssue += "slip SL+" + (string)vCSlip + " ";
+            gIssue += "=> loss: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
             gShow = 1;
          }
       }
@@ -1058,51 +1077,48 @@ void getBigger()
          vCSlip = OrderTakeProfit() - OrderClosePrice();
          if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-         if (gIsOpen)
+         if (gIsOpenFeature)
          {
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: OPEN+" + (string)vOSlipAbs + " & TP+" + (string)vCSlip + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+               vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN+" + (string)gOSlipAbs + " & TP+" + (string)vCSlip + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
                gShow = 1; 
             }
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
-               if (vOSlipAbs == vCSlip) 
-               {
-                  gIssue += "honest broker, returned points: ";
-                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-               }
-               if (vOSlipAbs > vCSlip)
-               {
-                  gIssue += "bad, loss: ";
-                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
-               }
-               if (vOSlipAbs < vCSlip)
-               {
-                  gIssue += "good, earn: ";
-                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenLossV += vOSlipV;
-               }
-               gIssue += "OPEN-" + (string)vOSlipAbs + " & TP+" + (string)vCSlip + " ";
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+               gIssue += "OPEN-" + (string)gOSlipAbs + " & TP+" + (string)vCSlip + " ";
                gShow = 1;
+
+               if (gOSlipAbs == vCSlip) 
+               {
+                  gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                  gIssue += "returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs > vCSlip)
+               {
+                  gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
+                  gIssue += "loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlipAbs < vCSlip)
+               {
+                  gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                  vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenLossV += vOSlipV;
+                  gIssue += "earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
             }
          }
          else 
          {
-            if (gPoint != 0)
-            {
-               vTP = MathRound( MathAbs(OrderTakeProfit() - OrderOpenPrice()) / gPoint );
-               vPointValCalc = MathAbs(OrderProfit()) / vTP;
-            }
-            gBiggerTP++; 
-            gBiggerTPP += OrderProfit() + OrderSwap();
-            gBiggerTPV += vPointValCalc + vCSlip;
-            gIssue += "slip TP+" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+            gBiggerTP++; gBiggerTPP += OrderProfit() + OrderSwap();
+            gBiggerTPV += gPointVal + vCSlip;
+
+            gIssue += "slip TP+" + (string)vCSlip + " ";
+            gIssue += "=> earn: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
             gShow = 1;
          }
       }
@@ -1115,28 +1131,9 @@ void getBigger()
 
 void getSmaller() 
 {
-   double vCSlip = 0, vOSlip = 0, vOSlipV = 0, vOSlipAbs = 0, vOpenReq = 0;
-   double vPointVal = 0, vPointValCalc = 0, vTP = 0, vSL = 0;
-   string k = "", kExt[];
+   double vCSlip = 0, vOSlipV = 0;
+   string k = OrderComment();
    
-   // set open slip
-   if (gIsOpen)
-   {
-      k = OrderComment(); StringSplit(k, StringGetCharacter(":", 0), kExt); 
-
-      vOpenReq = (double)kExt[1];
-      vPointVal = (double)kExt[2];
-
-      if (OrderOpenPrice() != vOpenReq)
-      {
-         if (gPoint != 0)
-         { 
-            vOSlip = MathRound((OrderOpenPrice() - vOpenReq) / gPoint);
-            vOSlipAbs = MathAbs(vOSlip);
-         }
-      }      
-   }
-
    if (OrderType() == OP_BUY)
    {    
       // EARN: smaller SL (faster closed SL)
@@ -1153,51 +1150,49 @@ void getSmaller()
             vCSlip = OrderClosePrice() - OrderStopLoss(); 
             if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-            if (gIsOpen)
+            if (gIsOpenFeature)
             {
-               if (vOSlip > 0) 
+               if (gOSlip > 0) 
                { 
-                  if (vOSlipAbs == vCSlip) 
-                  {
-                     gIssue += "honest broker, returned points: ";
-                     gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-                  }
-                  if (vOSlipAbs > vCSlip)
-                  {
-                     gIssue += "bad, loss: ";
-                     gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
-                  }
-                  if (vOSlipAbs < vCSlip)
-                  {
-                     gIssue += "good, earn: ";
-                     gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenEarnV += vOSlipV;
-                  }
-                  gIssue += "OPEN+" + (string)vOSlipAbs + " & SL-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+                  gIssue += "OPEN+" + (string)gOSlipAbs + " & SL-" + (string)vCSlip + " "; 
                   gShow = 1;
+
+                  if (gOSlipAbs == vCSlip) 
+                  {
+                     gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                     gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
+                  if (gOSlipAbs > vCSlip)
+                  {
+                     gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                     vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
+                     gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
+                  if (gOSlipAbs < vCSlip)
+                  {
+                     
+                     gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                     vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenEarnV += vOSlipV;
+                     gIssue += "=> good, earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
                }
-               if (vOSlip < 0) 
+               if (gOSlip < 0) 
                { 
                   gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
-                  gIssue += "good, earn: OPEN-" + (string)vOSlipAbs + " & SL-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+                  vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
+
+                  gIssue += "OPEN-" + (string)gOSlipAbs + " & SL-" + (string)vCSlip + " "; 
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
                   gShow = 1; 
                }
             }
             else 
             {
-               if (gPoint != 0)
-               {
-                  vSL = MathRound( MathAbs(OrderStopLoss() - OrderOpenPrice()) / gPoint );
-                  vPointValCalc = MathAbs(OrderProfit()) / vSL;
-               }
-               gCutSLB++; 
-               gCutSLBP += OrderProfit() + OrderSwap(); 
-               gCutSLBV += vPointValCalc * vCSlip;
-               gIssue += "slip SL-" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+               gCutSLB++; gCutSLBP += OrderProfit() + OrderSwap(); 
+               gCutSLBV += gPointVal * vCSlip;
+
+               gIssue += "slip SL-" + (string)vCSlip + " ";
+               gIssue += "=> earn: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
                gShow = 1;
             }
          }
@@ -1220,51 +1215,48 @@ void getSmaller()
             vCSlip = OrderTakeProfit() - OrderClosePrice();
             if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-            if (gIsOpen)
+            if (gIsOpenFeature)
             {
-               if (vOSlip > 0) 
+               if (gOSlip > 0) 
                { 
                   gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
-                  gIssue += "bad, loss: OPEN+" + (string)vOSlipAbs + " & TP-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
+                  vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
+
+                  gIssue += "OPEN+" + (string)gOSlipAbs + " & TP-" + (string)vCSlip + " "; 
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency; 
                   gShow = 1; 
                }
-               if (vOSlip < 0) 
+               if (gOSlip < 0) 
                { 
-                  if (vOSlipAbs == vCSlip) 
-                  {
-                     gIssue += "honest broker, returned points: ";
-                     gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
-                  }
-                  if (vOSlipAbs < vCSlip)
-                  {
-                     gIssue += "bad, loss: ";
-                     gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenLossV += vOSlipV;
-                  }
-                  if (vOSlipAbs > vCSlip)
-                  {
-                     gIssue += "good, earn: ";
-                     gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
-                  }
-                  gIssue += "OPEN-" + (string)vOSlipAbs + " & TP-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  gIssue += "OPEN-" + (string)gOSlipAbs + " & TP-" + (string)vCSlip + " "; 
                   gShow = 1;
+
+                  if (gOSlipAbs == vCSlip) 
+                  {
+                     gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                     gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
+                  if (gOSlipAbs < vCSlip)
+                  {
+                     gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
+                     vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenLossV += vOSlipV;
+                     gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
+                  if (gOSlipAbs > vCSlip)
+                  {
+                     gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
+                     vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
+                     gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  }
                }
             }
             else 
             {
-               if (gPoint != 0)
-               {
-                  vTP = MathRound( MathAbs(OrderTakeProfit() - OrderOpenPrice()) / gPoint );
-                  vPointValCalc = MathAbs(OrderProfit()) / vTP;
-               }
-               gCutTPB++; 
-               gCutTPBP += OrderProfit() + OrderSwap(); 
-               gCutTPBV += vPointValCalc * vCSlip;
-               gIssue += "slip TP-" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+               gCutTPB++; gCutTPBP += OrderProfit() + OrderSwap(); 
+               gCutTPBV += gPointVal * vCSlip;
+
+               gIssue += "slip TP-" + (string)vCSlip + " ";
+               gIssue += "=> loss: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
                gShow = 1;
             }
          }
@@ -1290,51 +1282,48 @@ void getSmaller()
             vCSlip = OrderStopLoss() - OrderClosePrice();
             if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
             
-            if (gIsOpen)
+            if (gIsOpenFeature)
             {
-               if (vOSlip > 0) 
+               if (gOSlip > 0) 
                { 
                   gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
-                  gIssue += "good, earn: OPEN+" + (string)vOSlipAbs + " & SL-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenEarnV += vOSlipV;
+
+                  gIssue += "OPEN+" + (string)gOSlipAbs + " & SL-" + (string)vCSlip + " "; 
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   gShow = 1; 
                }
-               if (vOSlip < 0) 
+               if (gOSlip < 0) 
                { 
-                 if (vOSlipAbs == vCSlip) 
+                 gIssue += "OPEN-" + (string)gOSlipAbs + " & SL-" + (string)vCSlip + " "; 
+                 gShow = 1; 
+
+                 if (gOSlipAbs == vCSlip) 
                   {
-                     gIssue += "honest broker, returned points: ";
                      gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                     gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  if (vOSlipAbs > vCSlip)
+                  if (gOSlipAbs > vCSlip)
                   {
-                     gIssue += "bad, loss: ";
                      gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
+                     vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenLossV += vOSlipV;
+                     gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  if (vOSlipAbs < vCSlip)
+                  if (gOSlipAbs < vCSlip)
                   {
-                     gIssue += "good, earn: ";
                      gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenEarnV += vOSlipV;
+                     vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenEarnV += vOSlipV;
+                     gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  gIssue += "OPEN-" + (string)vOSlipAbs + " & SL-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
-                  gShow = 1; 
                }
             }
             else 
             {
-               if (gPoint != 0)
-               {
-                  vSL = MathRound( MathAbs(OrderStopLoss() - OrderOpenPrice()) / gPoint );
-                  vPointValCalc = MathAbs(OrderProfit()) / vSL;
-               }
-               gCutSLB++; 
-               gCutSLBP += OrderProfit() + OrderSwap(); 
-               gCutSLBV += vPointValCalc * vCSlip;
-               gIssue += "slip SL-" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+               gCutSLB++; gCutSLBP += OrderProfit() + OrderSwap(); 
+               gCutSLBV += gPointVal * vCSlip;
+               
+               gIssue += "slip SL-" + (string)vCSlip + " ";
+               gIssue += "=> earn: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
                gShow = 1;
             }
          }
@@ -1357,51 +1346,48 @@ void getSmaller()
             vCSlip = OrderClosePrice() - OrderTakeProfit();
             if (gPoint != 0) { vCSlip = MathRound(vCSlip / gPoint); }
 
-            if (gIsOpen)
+            if (gIsOpenFeature)
             {
-               if (vOSlip > 0) 
+               if (gOSlip > 0) 
                { 
-                 if (vOSlipAbs == vCSlip) 
+                 gIssue += "OPEN+" + (string)gOSlipAbs + " & TP-" + (string)vCSlip + " "; 
+                 gShow = 1;
+
+                 if (gOSlipAbs == vCSlip) 
                   {
-                     gIssue += "honest broker, returned points: ";
                      gOpenHonest++; gOpenHonestP += OrderProfit() + OrderSwap();
+                     gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  if (vOSlipAbs < vCSlip)
+                  if (gOSlipAbs < vCSlip)
                   {
-                     gIssue += "bad, loss: ";
                      gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vCSlip - vOSlipAbs)); gOpenLossV += vOSlipV;
+                     vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOpenLossV += vOSlipV;
+                     gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  if (vOSlipAbs > vCSlip)
+                  if (gOSlipAbs > vCSlip)
                   {
-                     gIssue += "good, earn: ";
                      gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-                     vOSlipV = (vPointVal * (vOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
+                     vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOpenEarnV += vOSlipV;
+                     gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   }
-                  gIssue += "OPEN+" + (string)vOSlipAbs + " & TP-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
-                  gShow = 1;
                }
-               if (vOSlip < 0) 
+               if (gOSlip < 0) 
                { 
                   gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-                  vOSlipV = (vPointVal * (vOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
-                  gIssue += "bad, loss: OPEN-" + (string)vOSlipAbs + " & TP-" + (string)vCSlip + " "; 
-                  gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  vOSlipV = (gPointVal * (gOSlipAbs + vCSlip)); gOpenLossV += vOSlipV;
+
+                  gIssue += "OPEN-" + (string)gOSlipAbs + " & TP-" + (string)vCSlip + " "; 
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                   gShow = 1; 
                }
             }
             else 
             {
-               if (gPoint != 0)
-               {
-                  vTP = MathRound( MathAbs(OrderTakeProfit() - OrderOpenPrice()) / gPoint );
-                  vPointValCalc = MathAbs(OrderProfit()) / vTP;
-               }
-               gCutTPB++; 
-               gCutTPBP += OrderProfit() + OrderSwap(); 
-               gCutTPBV += vPointValCalc * vCSlip;
-               gIssue += "slip TP-" + (string)vCSlip + " => " + DoubleToStr(vPointValCalc * vCSlip, 2) + " " + gCurrency; 
+               gCutTPB++; gCutTPBP += OrderProfit() + OrderSwap(); 
+               gCutTPBV += gPointVal * vCSlip;
+
+               gIssue += "slip TP-" + (string)vCSlip + " ";
+               gIssue += "=> loss: " + DoubleToStr(gPointVal * vCSlip, 2) + " " + gCurrency; 
                gShow = 1;
             }
          }
@@ -1512,7 +1498,7 @@ void getHedge()
    string vOrderType = "";
    
    // exit if open feature not available in comment
-   if (!gIsOpen) { return; }
+   if (!gIsOpenFeature) { return; }
 
    // set comment
    k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
@@ -1534,29 +1520,16 @@ void getHedge()
 void getOpenSlip() 
 {
    int    vShow = 0;
-   string k = "", kExt[];
-   double vOpenReq = 0, vOSlip = 0, vOSlipV = 0, vOSlipAbs = 0, vPointVal = 0;
+   double vOSlipV = 0;
+   string k = OrderComment();
 
    // exit if open feature not available in comment
-   if (!gIsOpen) { return; }
+   if (!gIsOpenFeature) { return; }
 
-   // set open slip size
-   k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
-   
-   vOpenReq = (double)kExt[1]; 
-   vPointVal = (double)kExt[2];
-   
-   if (OrderOpenPrice() != vOpenReq)
+   if (OrderOpenPrice() != gOpenReq)
    {
       // there is open slip
       gOpenAll++; gOpenAllP += OrderProfit() + OrderSwap(); gShow = 1;
-      
-      // set open slip size
-      if (gPoint != 0) 
-      { 
-         vOSlip = MathRound((OrderOpenPrice() - vOpenReq) / gPoint); 
-         vOSlipAbs = MathAbs(vOSlip);
-      }
       
       // open slip but no points back (TP equal)
       if (OrderClosePrice() == OrderTakeProfit())
@@ -1564,42 +1537,46 @@ void getOpenSlip()
          if (OrderType() == OP_BUY)
          {  
             // smaller TP
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap();
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN+ => TP-" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenLossV += vOSlipV;
+
+               gIssue += "OPEN+ => TP-" + (string)gOSlipAbs + " "; 
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
             // bigger TP
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: OPEN- => TP+" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN- => TP+" + (string)gOSlipAbs + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++; 
             }
          }
          if (OrderType() == OP_SELL)
          {
             // smaller TP
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN- => TP-" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenLossV += vOSlipV;
+
+               gIssue += "OPEN- => TP-" + (string)gOSlipAbs + " "; 
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
             // bigger TP
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: OPEN+ => TP+" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN+ => TP+" + (string)gOSlipAbs + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
          }
@@ -1611,42 +1588,46 @@ void getOpenSlip()
          if (OrderType() == OP_BUY)
          {
             // bigger SL
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN+ => SL+" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenLossV += vOSlipV;
+
+               gIssue += "OPEN+ => SL+" + (string)gOSlipAbs + " "; 
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
             // smaller SL
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: OPEN- => SL-" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN- => SL-" + (string)gOSlipAbs + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
          }
          if (OrderType() == OP_SELL)
          {
             // bigger SL
-            if (vOSlip < 0) 
+            if (gOSlip < 0) 
             { 
                gOpenLoss++; gOpenLossP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenLossV += vOSlipV;
-               gIssue += "bad, loss: OPEN- => SL+" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenLossV += vOSlipV;
+
+               gIssue += "OPEN- => SL+" + (string)gOSlipAbs + " "; 
+               gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
             // smaller SL
-            if (vOSlip > 0) 
+            if (gOSlip > 0) 
             { 
                gOpenEarn++; gOpenEarnP += OrderProfit() + OrderSwap(); 
-               vOSlipV = (vPointVal * vOSlipAbs); gOpenEarnV += vOSlipV;
-               gIssue += "good, earn: OPEN+ => SL-" + (string)vOSlipAbs + " "; 
-               gIssue += " => " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               vOSlipV = (gPointVal * gOSlipAbs); gOpenEarnV += vOSlipV;
+
+               gIssue += "OPEN+ => SL-" + (string)gOSlipAbs + " "; 
+               gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                vShow++;
             }
          }
@@ -1660,7 +1641,38 @@ void getOpenSlip()
          if (StringFind(k, "[tp]", 0) == -1 && StringFind(k, "[sl]", 0) == -1) 
          { 
             gOpenTrader++; gOpenTraderP += OrderProfit() + OrderSwap();
-            gIssue += "OPEN slip, closed by trader";
+            gIssue += "Closed by trader, ";
+            
+            // need to know requested close price to be sure there was no points back
+            vOSlipV = (gPointVal * gOSlipAbs);
+
+            if (OrderType() == OP_BUY)
+            {  
+               if (gOSlip > 0) 
+               { 
+                  gIssue += "OPEN+" + (string)gOSlipAbs + " "; 
+                  gIssue += "=> possible loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlip < 0) 
+               { 
+                  gIssue += "OPEN-" + (string)gOSlipAbs + " "; 
+                  gIssue += "=> possible earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+            }
+            if (OrderType() == OP_SELL)
+            {
+               if (gOSlip < 0) 
+               { 
+                  gIssue += "OPEN-" + (string)gOSlipAbs + " "; 
+                  gIssue += "=> possible loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+               }
+               if (gOSlip > 0) 
+               { 
+                  gIssue += "OPEN+" + (string)gOSlipAbs + " "; 
+                  gIssue += "=> possible earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  vShow++;
+               }
+            }
          }
          else
          {
@@ -1706,8 +1718,7 @@ void getCloseSlip()
 
 void OnStart()
 {
-   int    vTotal = OrdersHistoryTotal();
-   string k = "";
+   int vTotal = OrdersHistoryTotal();
    
    Print("");
    Print("");
@@ -1719,20 +1730,13 @@ void OnStart()
    {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) { continue; }
      
-      // reset values for each order
-      gShow = 0; gIssue = ""; gIsOpen = false;
-
-      // for old markets, need to open chart to load data to get it worked
-      gPoint = MarketInfo(OrderSymbol(), MODE_POINT);
-      
-      // check if there is open feature active in comment
-      k = OrderComment(); if (StringFind(k, ":", 0) != -1) { gIsOpen = true; gHasOpen = true; }
-      
-      getBigger();                                         // bigger TP or SL
-      getSmaller();                                        // smaller TP or SL
-
       if (OrderType() == OP_BUY || OrderType() == OP_SELL)
       {
+         setGlobals();                                     // set global values for selected order
+   
+         getBigger();                                      // bigger TP or SL
+         getSmaller();                                     // smaller TP or SL
+
          getWithSet();                                     // with set TP or SL
          getWithNotSet();                                  // with not set TP or SL
          getOrderTime();                                   // quick, day-trade, long-time orders
@@ -1744,8 +1748,9 @@ void OnStart()
 
          gActivated++;                                     // all olders but only activated
          gActivatedP += OrderProfit() + OrderSwap();       // money flow
+
+         if (gShow == 1 || gShow == 2) { setEntry(); }     // issues
       }
-      if (gShow == 1 || gShow == 2) { setEntry(); }        // issues
    }
    
    setSummary();                                           // calculate final result
