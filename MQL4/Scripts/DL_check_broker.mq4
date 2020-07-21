@@ -48,8 +48,10 @@ double gCutTPB = 0; // close slip with Cut Take Profit by Broker (bad)
 double gBigSLB = 0; // close slip with Bigger Stop Loss by Broker (bad)
 
 // counters - other
-double gQuickEarn = 0, gDTEarn = 0, gInvestEarn = 0, gHedgeEarn = 0;
-double gQuickLoss = 0, gDTLoss = 0, gInvestLoss = 0, gHedgeLoss = 0;
+double gTimeQrE = 0, gTimeDTrE = 0, gTimeIrE = 0;
+double gTimeQrL = 0, gTimeDTrL = 0, gTimeIrL = 0;
+double gTypeHrE = 0, gTypePSrE = 0, gTypePLrE = 0, gTypeIrE = 0;
+double gTypeHrL = 0, gTypePSrL = 0, gTypePLrL = 0, gTypeIrL = 0;
 double gCutTPT = 0, gCutSLT = 0;
 double gSLEqual = 0, gTPEqual = 0, gCloseSlip = 0, gBrokerClosed = 0; 
 double gSet = 0, gNotSet = 0, gActivated = 0;
@@ -59,8 +61,10 @@ double gOSCBHP = 0, gOSCBEP = 0, gOSCBLP = 0, gOSCBAP = 0;
 double gOSCTEP = 0, gOSCTLP = 0, gOSCTAP = 0;
 double gOSAP = 0;
 double gBigTPBP = 0, gBigSLBP = 0, gCutTPBP = 0, gCutSLBP = 0;
-double gQuickEarnP = 0, gDTEarnP = 0, gInvestEarnP = 0, gHedgeEarnP = 0;
-double gQuickLossP = 0, gDTLossP = 0, gInvestLossP = 0, gHedgeLossP = 0;
+double gTimeQrEP = 0, gTimeDTrEP = 0, gTimeIrEP = 0;
+double gTimeQrLP = 0, gTimeDTrLP = 0, gTimeIrLP = 0;
+double gTypeHrEP = 0, gTypePSrEP = 0, gTypePLrEP = 0, gTypeIrEP = 0;
+double gTypeHrLP = 0, gTypePSrLP = 0, gTypePLrLP = 0, gTypeIrLP = 0;
 double gCutTPTP = 0, gCutSLTP = 0;
 double gSLEqualP = 0, gTPEqualP = 0, gCloseSlipP = 0, gBrokerClosedP = 0; 
 double gSetP = 0, gNotSetP = 0, gActivatedP = 0;
@@ -295,9 +299,7 @@ void setSummary()
       gSum += vDataSep + "100 %";
       gSum += vDataSep + DoubleToStr(gOSAP, 2) + " " + gCurrency;
       gSum += vDataSep + DoubleToStr(gOSAV, 2) + " " + gCurrency;
-      if      (gOSAV > 0) { gSum += vDataSep + "( rather good broker )"; } 
-      else if (gOSAV < 0) { gSum += vDataSep + "( rather bad broker )"; }
-      else                { gSum += vDataSep + ""; }
+      gSum += vDataSep + "";
       gSum += vDataSep + "All orders with open slip.";
    }
    else
@@ -386,27 +388,27 @@ void setSummary()
    gSum += vDataSep + "";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gQuickEarn, 0);
-   gSum += vDataSep + DoubleToStr((gQuickEarn / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gQuickEarnP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeQrE, 0);
+   gSum += vDataSep + DoubleToStr((gTimeQrE / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeQrEP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( good for scalpers & robots )";
    gSum += vDataSep + "Quick orders with earn ( profit > 0 ).";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gQuickLoss, 0);
-   gSum += vDataSep + DoubleToStr((gQuickLoss / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gQuickLossP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeQrL, 0);
+   gSum += vDataSep + DoubleToStr((gTimeQrL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeQrLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( not good for scalpers & robots )";
    gSum += vDataSep + "Quick orders with loss ( profit < 0 ).";
    
    gSum += vDataSep + "=";
-   gSum += vDataSep + DoubleToStr(gQuickEarn + gQuickLoss, 0);
-   gSum += vDataSep + DoubleToStr(((gQuickEarn + gQuickLoss ) / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gQuickEarnP + gQuickLossP, 2) + " " + gCurrency;
-   if      (gQuickEarnP + gQuickLossP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good scalping strategy )"; }
-   else if (gQuickEarnP + gQuickLossP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad scalping strategy )"; }
+   gSum += vDataSep + DoubleToStr(gTimeQrE + gTimeQrL, 0);
+   gSum += vDataSep + DoubleToStr(((gTimeQrE + gTimeQrL ) / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeQrEP + gTimeQrLP, 2) + " " + gCurrency;
+   if      (gTimeQrEP + gTimeQrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good scalping strategy )"; }
+   else if (gTimeQrEP + gTimeQrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad scalping strategy )"; }
    else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All quick orders.";
    
@@ -421,27 +423,27 @@ void setSummary()
    gSum += vDataSep + "";
 
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gDTEarn, 0);
-   gSum += vDataSep + DoubleToStr((gDTEarn / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gDTEarnP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeDTrE, 0);
+   gSum += vDataSep + DoubleToStr((gTimeDTrE / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeDTrEP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( good for day-traders )";
    gSum += vDataSep + "Day-trading orders with earn ( profit > 0 ).";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gDTLoss, 0);
-   gSum += vDataSep + DoubleToStr((gDTLoss / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gDTLossP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeDTrL, 0);
+   gSum += vDataSep + DoubleToStr((gTimeDTrL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeDTrLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( not good for day-traders )";
    gSum += vDataSep + "Day-trading orders with loss ( profit < 0 ).";
 
    gSum += vDataSep + "=";
-   gSum += vDataSep + DoubleToStr(gDTEarn + gDTLoss, 0);
-   gSum += vDataSep + DoubleToStr(((gDTEarn + gDTLoss) / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gDTEarnP + gDTLossP, 2) + " " + gCurrency;
-   if      (gDTEarnP + gDTLossP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good day-trading strategy )"; }
-   else if (gDTEarnP + gDTLossP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad day-trading strategy )"; }
+   gSum += vDataSep + DoubleToStr(gTimeDTrE + gTimeDTrL, 0);
+   gSum += vDataSep + DoubleToStr(((gTimeDTrE + gTimeDTrL) / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeDTrEP + gTimeDTrLP, 2) + " " + gCurrency;
+   if      (gTimeDTrEP + gTimeDTrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good day-trading strategy )"; }
+   else if (gTimeDTrEP + gTimeDTrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad day-trading strategy )"; }
    else                              { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All day-trading orders.";
       
@@ -456,27 +458,27 @@ void setSummary()
    gSum += vDataSep + "";
 
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gInvestEarn, 0);
-   gSum += vDataSep + DoubleToStr((gInvestEarn / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gInvestEarnP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeIrE, 0);
+   gSum += vDataSep + DoubleToStr((gTimeIrE / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeIrEP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( good for investors )";
    gSum += vDataSep + "Long-time orders with earn ( profit > 0 ).";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gInvestLoss, 0);
-   gSum += vDataSep + DoubleToStr((gInvestLoss / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gInvestLossP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gTimeIrL, 0);
+   gSum += vDataSep + DoubleToStr((gTimeIrL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeIrLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( not good for investors )";
    gSum += vDataSep + "Long-time orders with loss ( profit < 0 ).";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gInvestEarn + gInvestLoss, 0);
-   gSum += vDataSep + DoubleToStr(((gInvestEarn + gInvestLoss) / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gInvestEarnP + gInvestLossP, 2) + " " + gCurrency;
-   if      (gInvestEarnP + gInvestLossP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good long-term strategy )"; } 
-   else if (gInvestEarnP + gInvestLossP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad long-term strategy )"; }
+   gSum += vDataSep + DoubleToStr(gTimeIrE + gTimeIrL, 0);
+   gSum += vDataSep + DoubleToStr(((gTimeIrE + gTimeIrL) / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gTimeIrEP + gTimeIrLP, 2) + " " + gCurrency;
+   if      (gTimeIrEP + gTimeIrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good long-term strategy )"; } 
+   else if (gTimeIrEP + gTimeIrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad long-term strategy )"; }
    else                                      { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All long-term orders.";
 
@@ -493,29 +495,135 @@ void setSummary()
       gSum += vDataSep + "";
 
       gSum += vDataSep + "";
-      gSum += vDataSep + DoubleToStr(gHedgeEarn, 0);
-      gSum += vDataSep + DoubleToStr((gHedgeEarn / gActivated) * 100, 1) + " %";
-      gSum += vDataSep + DoubleToStr(gHedgeEarnP, 2) + " " + gCurrency;
+      gSum += vDataSep + DoubleToStr(gTypeHrE, 0);
+      gSum += vDataSep + DoubleToStr((gTypeHrE / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeHrEP, 2) + " " + gCurrency;
       gSum += vDataSep + "-";
       gSum += vDataSep + "( good for hedging )";
       gSum += vDataSep + "Hedging orders with earn ( profit > 0 ).";
       
       gSum += vDataSep + "";
-      gSum += vDataSep + DoubleToStr(gHedgeLoss, 0);
-      gSum += vDataSep + DoubleToStr((gHedgeLoss / gActivated) * 100, 1) + " %";
-      gSum += vDataSep + DoubleToStr(gHedgeLossP, 2) + " " + gCurrency;
+      gSum += vDataSep + DoubleToStr(gTypeHrL, 0);
+      gSum += vDataSep + DoubleToStr((gTypeHrL / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeHrLP, 2) + " " + gCurrency;
       gSum += vDataSep + "-";
       gSum += vDataSep + "( not good for hedging )";
       gSum += vDataSep + "Hedging orders with loss ( profit < 0 ).";
       
       gSum += vDataSep + "=";
-      gSum += vDataSep + DoubleToStr(gHedgeEarn + gHedgeLoss, 0);
-      gSum += vDataSep + DoubleToStr(((gHedgeEarn + gHedgeLoss) / gActivated) * 100, 1) + " %";
-      gSum += vDataSep + DoubleToStr(gHedgeEarnP + gHedgeLossP, 2) + " " + gCurrency;
-      if      (gHedgeEarnP + gHedgeLossP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good hedging strategy )"; } 
-      else if (gHedgeEarnP + gHedgeLossP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad hedging strategy )"; }
+      gSum += vDataSep + DoubleToStr(gTypeHrE + gTypeHrL, 0);
+      gSum += vDataSep + DoubleToStr(((gTypeHrE + gTypeHrL) / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeHrEP + gTypeHrLP, 2) + " " + gCurrency;
+      if      (gTypeHrEP + gTypeHrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good hedging strategy )"; } 
+      else if (gTypeHrEP + gTypeHrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad hedging strategy )"; }
       else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
       gSum += vDataSep + "All hedging orders.";
+
+
+      // pending stop
+
+      gSum += vDataSep + "Pending stop :";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypePSrE, 0);
+      gSum += vDataSep + DoubleToStr((gTypePSrE / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePSrEP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( good for pending stop )";
+      gSum += vDataSep + "Pending stop orders with earn ( profit > 0 ).";
+      
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypePSrL, 0);
+      gSum += vDataSep + DoubleToStr((gTypePSrL / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePSrLP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( not good for pending stop )";
+      gSum += vDataSep + "Pending stop orders with loss ( profit < 0 ).";
+      
+      gSum += vDataSep + "=";
+      gSum += vDataSep + DoubleToStr(gTypePSrE + gTypePSrL, 0);
+      gSum += vDataSep + DoubleToStr(((gTypePSrE + gTypePSrL) / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePSrEP + gTypePSrLP, 2) + " " + gCurrency;
+      if      (gTypePSrEP + gTypePSrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good pending stop strategy )"; } 
+      else if (gTypePSrEP + gTypePSrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad pending stop strategy )"; }
+      else                                  { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+      gSum += vDataSep + "All pending stop orders.";
+
+      // pending limit
+
+      gSum += vDataSep + "Pending limit :";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypePLrE, 0);
+      gSum += vDataSep + DoubleToStr((gTypePLrE / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePLrEP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( good for pending limit )";
+      gSum += vDataSep + "Pending limit orders with earn ( profit > 0 ).";
+      
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypePLrL, 0);
+      gSum += vDataSep + DoubleToStr((gTypePLrL / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePLrLP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( not good for pending limit )";
+      gSum += vDataSep + "Pending limit orders with loss ( profit < 0 ).";
+      
+      gSum += vDataSep + "=";
+      gSum += vDataSep + DoubleToStr(gTypePLrE + gTypePLrL, 0);
+      gSum += vDataSep + DoubleToStr(((gTypePLrE + gTypePLrL) / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypePLrEP + gTypePLrLP, 2) + " " + gCurrency;
+      if      (gTypePLrEP + gTypePLrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good pending limit strategy )"; } 
+      else if (gTypePLrEP + gTypePLrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad pending limit strategy )"; }
+      else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+      gSum += vDataSep + "All pending limit orders.";
+
+      // instant orders
+
+      gSum += vDataSep + "Instant orders :";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+      gSum += vDataSep + "";
+
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypeIrE, 0);
+      gSum += vDataSep + DoubleToStr((gTypeIrE / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeIrEP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( good for instant orders )";
+      gSum += vDataSep + "Instant orders with earn ( profit > 0 ).";
+      
+      gSum += vDataSep + "";
+      gSum += vDataSep + DoubleToStr(gTypeIrL, 0);
+      gSum += vDataSep + DoubleToStr((gTypeIrL / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeIrLP, 2) + " " + gCurrency;
+      gSum += vDataSep + "-";
+      gSum += vDataSep + "( not good for instant orders )";
+      gSum += vDataSep + "Instant orders with loss ( profit < 0 ).";
+      
+      gSum += vDataSep + "=";
+      gSum += vDataSep + DoubleToStr(gTypeIrE + gTypeIrL, 0);
+      gSum += vDataSep + DoubleToStr(((gTypeIrE + gTypeIrL) / gActivated) * 100, 1) + " %";
+      gSum += vDataSep + DoubleToStr(gTypeIrEP + gTypeIrLP, 2) + " " + gCurrency;
+      if      (gTypeIrEP + gTypeIrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good instant strategy )"; } 
+      else if (gTypeIrEP + gTypeIrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad instant strategy )"; }
+      else                                { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+      gSum += vDataSep + "All instant orders.";
    }
 
    // Trader emotions
@@ -1518,12 +1626,12 @@ void getOrderTime()
    
       if (OrderProfit() > 0) 
       { 
-         gQuickEarn++; gQuickEarnP += OrderProfit() + OrderSwap();
+         gTimeQrE++; gTimeQrEP += OrderProfit() + OrderSwap();
          gIssue = "Quick, " + gIssue; gShow = 1; 
       }
       if (OrderProfit() < 0) 
       { 
-         gQuickLoss++; gQuickLossP += OrderProfit() + OrderSwap();
+         gTimeQrL++; gTimeQrLP += OrderProfit() + OrderSwap();
          gIssue = "Quick, " + gIssue; gShow = 1;
       }
    }
@@ -1531,12 +1639,12 @@ void getOrderTime()
    
       if (OrderProfit() > 0) 
       { 
-         gDTEarn++; gDTEarnP += OrderProfit() + OrderSwap();
+         gTimeDTrE++; gTimeDTrEP += OrderProfit() + OrderSwap();
          gIssue = "Day-trade, " + gIssue;
       }
       if (OrderProfit() < 0) 
       { 
-         gDTLoss++; gDTLossP += OrderProfit() + OrderSwap();
+         gTimeDTrL++; gTimeDTrLP += OrderProfit() + OrderSwap();
          gIssue = "Day-trade, " + gIssue;
       }
    }
@@ -1544,12 +1652,12 @@ void getOrderTime()
    {
       if (OrderProfit() > 0) 
       { 
-         gInvestEarn++; gInvestEarnP += OrderProfit() + OrderSwap();
+         gTimeIrE++; gTimeIrEP += OrderProfit() + OrderSwap();
          gIssue = "Investing, " + gIssue;
       }
       if (OrderProfit() < 0) 
       { 
-         gInvestLoss++; gInvestLossP += OrderProfit() + OrderSwap();
+         gTimeIrL++; gTimeIrLP += OrderProfit() + OrderSwap();
          gIssue = "Investing, " + gIssue;
       }
    }
@@ -1574,8 +1682,80 @@ void getHedge()
    vOrderType = (string)kExt[5]; 
    if ( StringFind(vOrderType, "H", 0) != -1 ) 
    {
-      if (OrderProfit() > 0) { gHedgeEarn++; gHedgeEarnP += OrderProfit() + OrderSwap(); }
-      if (OrderProfit() < 0) { gHedgeLoss++; gHedgeLossP += OrderProfit() + OrderSwap(); }
+      if (OrderProfit() > 0) { gTypeHrE++; gTypeHrEP += OrderProfit() + OrderSwap(); }
+      if (OrderProfit() < 0) { gTypeHrL++; gTypeHrLP += OrderProfit() + OrderSwap(); }
+   } 
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Get pending stop orders
+// -----------------------------------------------------------------------------------------------------------------------
+
+void getPendingStop() 
+{
+   string k = "", kExt[];
+   string vOrderType = "";
+   
+   // exit if open feature not available in comment
+   if (!gIsOpenFeature) { return; }
+
+   // set comment
+   k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
+   
+   // set hedge
+   vOrderType = (string)kExt[5]; 
+   if ( StringFind(vOrderType, "PS", 0) != -1 ) 
+   {
+      if (OrderProfit() > 0) { gTypePSrE++; gTypePSrEP += OrderProfit() + OrderSwap(); }
+      if (OrderProfit() < 0) { gTypePSrL++; gTypePSrLP += OrderProfit() + OrderSwap(); }
+   } 
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Get pending limit orders
+// -----------------------------------------------------------------------------------------------------------------------
+
+void getPendingLimit() 
+{
+   string k = "", kExt[];
+   string vOrderType = "";
+   
+   // exit if open feature not available in comment
+   if (!gIsOpenFeature) { return; }
+
+   // set comment
+   k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
+   
+   // set hedge
+   vOrderType = (string)kExt[5]; 
+   if ( StringFind(vOrderType, "PL", 0) != -1 ) 
+   {
+      if (OrderProfit() > 0) { gTypePLrE++; gTypePLrEP += OrderProfit() + OrderSwap(); }
+      if (OrderProfit() < 0) { gTypePLrL++; gTypePLrLP += OrderProfit() + OrderSwap(); }
+   } 
+}
+
+// -----------------------------------------------------------------------------------------------------------------------
+// Get Instant Execution orders
+// -----------------------------------------------------------------------------------------------------------------------
+
+void getInstant() 
+{
+   string k = "", kExt[];
+   string vOrderType = "";
+   
+   // exit if open feature not available in comment
+   if (!gIsOpenFeature) { return; }
+
+   // set comment
+   k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
+   
+   // set hedge
+   vOrderType = (string)kExt[5]; 
+   if ( StringFind(vOrderType, "I", 0) != -1 ) 
+   {
+      if (OrderProfit() > 0) { gTypeIrE++; gTypeIrEP += OrderProfit() + OrderSwap(); }
+      if (OrderProfit() < 0) { gTypeIrL++; gTypeIrLP += OrderProfit() + OrderSwap(); }
    } 
 }
 
@@ -1821,6 +2001,9 @@ void OnStart()
          getOpenSlip();                                    // open slip with expected TP or SL price
          getByBroker();                                    // all orders closed by Broker
          getHedge();                                       // hedging orders
+         getPendingStop();                                 // pending stop orders
+         getPendingLimit();                                // pending limit orders
+         getInstant();                                     // instant orders
          getCloseSlip();                                   // close slip (via TP or SL)
 
          gActivated++;                                     // all olders but only activated
