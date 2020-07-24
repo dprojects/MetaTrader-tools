@@ -213,13 +213,13 @@ void setSummary()
       vCloseSlipsV = gBigTPBV + gCutSLBV - gBigSLBV - gCutTPBV;
    }
 
-   if (vRatioG == 100)    { vR = "DEMO ?"; } 
-   else if (vRatioG > 80) { vR = "VERY GOOD"; } 
-   else if (vRatioG > 50) { vR = "GOOD"; }
-   else if (vRatioG > 20) { vR = "BAD"; }
-   else                   { vR = "VERY BAD"; }
+   vR += DoubleToStr(vRatioG, 0) + "%, ";
 
-   vR += "   ( " + DoubleToStr(vRatioG, 0) + "% ) ";
+   if (vRatioG == 100)    { vR += "DEMO ?"; } 
+   else if (vRatioG > 80) { vR += "VERY GOOD"; } 
+   else if (vRatioG > 50) { vR += "GOOD"; }
+   else if (vRatioG > 20) { vR += "BAD"; }
+   else                   { vR += "VERY BAD"; }
  
    // Summary
 
@@ -1254,7 +1254,7 @@ void getBigger()
                {
                   gOSCBE++; gOSCBEP += OrderProfit() + OrderSwap(); 
                   vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOSCBEV += vOSlipV;
-                  gIssue += "earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                }               
             }
             if (gOSlip < 0) 
@@ -1303,19 +1303,19 @@ void getBigger()
                if (gOSlipAbs == vCSlip) 
                {
                   gOSCBH++; gOSCBHP += OrderProfit() + OrderSwap();
-                  gIssue += "returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  gIssue += "=> returned: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                }
                if (gOSlipAbs > vCSlip)
                {
                   gOSCBL++; gOSCBLP += OrderProfit() + OrderSwap(); 
                   vOSlipV = (gPointVal * (gOSlipAbs - vCSlip)); gOSCBLV += vOSlipV;
-                  gIssue += "loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  gIssue += "=> loss: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                }
                if (gOSlipAbs < vCSlip)
                {
                   gOSCBE++; gOSCBEP += OrderProfit() + OrderSwap(); 
                   vOSlipV = (gPointVal * (vCSlip - gOSlipAbs)); gOSCBLV += vOSlipV;
-                  gIssue += "earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
+                  gIssue += "=> earn: " + DoubleToStr(vOSlipV, 2) + " " + gCurrency;
                }
             }
          }
