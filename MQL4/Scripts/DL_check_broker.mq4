@@ -13,6 +13,14 @@
 #include <WinUser32.mqh>
 
 // -----------------------------------------------------------------------------------------------------------------------
+// CODING STANDARDS HERE
+// -----------------------------------------------------------------------------------------------------------------------
+
+// prefix g - means Global variable
+// prefix s - means Settings variable
+// prefix v - means Variable (local)
+
+// -----------------------------------------------------------------------------------------------------------------------
 // SETTINGS
 // -----------------------------------------------------------------------------------------------------------------------
 
@@ -20,6 +28,8 @@ bool sHTML     = true;                                                        //
 bool sCSV      = true;                                                        // generate CSV output
 
 string sSep    = ";";                                                         // CSV entry separator, for converters
+
+// for console log
 string sCol    = " | ";                                                       // left padding
 string sLine   = sCol +
                         "--------------------------------------------------------------------------------" +
@@ -31,32 +41,55 @@ string sLine   = sCol +
 // -----------------------------------------------------------------------------------------------------------------------
 
 // counters - open slip 
-double gOSCBH = 0; // Open Slip Closed by Broker with Honest return points
-double gOSCBE = 0; // Open Slip Closed by Broker with Earn return points
-double gOSCBL = 0; // Open Slip Closed by Broker with Loss return points
+double gOSCBH = 0;        // Open Slip Closed by Broker with Honest return points
+double gOSCBE = 0;        // Open Slip Closed by Broker with Earn return points
+double gOSCBL = 0;        // Open Slip Closed by Broker with Loss return points
 
-double gOSCTE = 0; // Open Slip Closed by Trader with Earn return points
-double gOSCTL = 0; // Open Slip Closed by Trader with Loss return points
+double gOSCTE = 0;        // Open Slip Closed by Trader with Earn return points
+double gOSCTL = 0;        // Open Slip Closed by Trader with Loss return points
 
-double gOSA = 0;   // Open Slip All
+double gOSA = 0;          // Open Slip All
 
 // counters - close slip
-double gBigTPB = 0; // close slip with Bigger Take Profit by Broker (good)
-double gCutSLB = 0; // close slip with Cut Stop Loss by Broker (good)
+double gBigTPB = 0;       // close slip with Bigger Take Profit by Broker (good)
+double gCutSLB = 0;       // close slip with Cut Stop Loss by Broker (good)
 
-double gCutTPB = 0; // close slip with Cut Take Profit by Broker (bad)
-double gBigSLB = 0; // close slip with Bigger Stop Loss by Broker (bad)
+double gCutTPB = 0;       // close slip with Cut Take Profit by Broker (bad)
+double gBigSLB = 0;       // close slip with Bigger Stop Loss by Broker (bad)
 
-// counters - other
-double gTimeQrE = 0, gTimeDTrE = 0, gTimeIrE = 0;
-double gTimeQrL = 0, gTimeDTrL = 0, gTimeIrL = 0;
-double gTypeHrE = 0, gTypePSrE = 0, gTypePLrE = 0, gTypeIrE = 0;
-double gTypeHrL = 0, gTypePSrL = 0, gTypePLrL = 0, gTypeIrL = 0;
-double gCutTPT = 0, gCutSLT = 0;
-double gSLEqual = 0, gTPEqual = 0, gCloseSlip = 0, gBrokerClosed = 0; 
-double gSet = 0, gNotSet = 0, gActivated = 0;
+double gCloseSlip = 0;    // all orders with Close price Slip
+double gClosedB = 0;      // all orders Closed by Broker
 
-// profit
+// counters - closed by trader
+double gCutTPT = 0;       // orders with Cut Take Profit by Trader (trader closed earlier and make possible loss)
+double gCutSLT = 0;       // orders with Cut Stop Loss by Trader (trader closed earlier and make possible profit)
+
+// counters - related to time
+double gTimeQrE = 0;      // Time Quick with result Earn
+double gTimeQrL = 0;      // Time Quick with result Loss
+double gTimeDTrE = 0;     // Time Day-Trade with result Earn
+double gTimeDTrL = 0;     // Time Day-Trade with result Loss
+double gTimeIrE = 0;      // Time Invest with result Earn
+double gTimeIrL = 0;      // Time Invest with result Loss
+
+// counters - related to order type
+double gTypeHrE = 0;      // orders with Type Hedge and with result Earn
+double gTypeHrL = 0;      // orders with Type Hedge and with result Loss
+double gTypePSrE = 0;     // orders with Type Pending Stop and with result Earn
+double gTypePSrL = 0;     // orders with Type Pending stop and with result Loss
+double gTypePLrE = 0;     // orders with Type Pending Limit and with result Earn
+double gTypePLrL = 0;     // orders with Type Pending Limit and with result Loss
+double gTypeIrE = 0;      // orders with Type Instant execution and with result Earn
+double gTypeIrL = 0;      // orders with Type Instant execution and with result Loss
+
+// counters - other stats
+double gSLEqual = 0;      // orders with Stop Loss price Equal closed price (no slip at the end of order)
+double gTPEqual = 0;      // orders with Take Profit price Equal closed price (no slip at the end of order)
+double gSTPSL = 0;        // orders with Set TP or SL
+double gNTPSL = 0;        // orders with Not set TP or SL
+double gActivated = 0;    // all orders
+
+// same meaning as counters but with profit calculation
 double gOSCBHP = 0, gOSCBEP = 0, gOSCBLP = 0, gOSCBAP = 0;
 double gOSCTEP = 0, gOSCTLP = 0, gOSCTAP = 0;
 double gOSAP = 0;
@@ -66,10 +99,10 @@ double gTimeQrLP = 0, gTimeDTrLP = 0, gTimeIrLP = 0;
 double gTypeHrEP = 0, gTypePSrEP = 0, gTypePLrEP = 0, gTypeIrEP = 0;
 double gTypeHrLP = 0, gTypePSrLP = 0, gTypePLrLP = 0, gTypeIrLP = 0;
 double gCutTPTP = 0, gCutSLTP = 0;
-double gSLEqualP = 0, gTPEqualP = 0, gCloseSlipP = 0, gBrokerClosedP = 0; 
-double gSetP = 0, gNotSetP = 0, gActivatedP = 0;
+double gSLEqualP = 0, gTPEqualP = 0, gCloseSlipP = 0, gClosedBP = 0; 
+double gSTPSLP = 0, gNTPSLP = 0, gActivatedP = 0;
 
-// diff points value
+// same meaning as counters but with diff points value calculation
 double gOSCBEV = 0, gOSCBLV = 0, gOSCBAV = 0;
 double gOSCTEV = 0, gOSCTLV = 0, gOSCTAV = 0;
 double gOSAV = 0;
@@ -126,7 +159,7 @@ void setGlobals()
          }
       }      
    }
-   else
+   else // if there is no open feature try to guess point value using profit
    {
       if (gPoint != 0)
       {
@@ -180,11 +213,11 @@ void setSummary()
       vCloseSlipsV = gBigTPBV + gCutSLBV - gBigSLBV - gCutTPBV;
    }
 
-   if (vRatioG == 100) { vR = "DEMO ?"; } 
+   if (vRatioG == 100)    { vR = "DEMO ?"; } 
    else if (vRatioG > 80) { vR = "VERY GOOD"; } 
    else if (vRatioG > 50) { vR = "GOOD"; }
    else if (vRatioG > 20) { vR = "BAD"; }
-   else { vR = "VERY BAD"; }
+   else                   { vR = "VERY BAD"; }
 
    vR += "   ( " + DoubleToStr(vRatioG, 0) + "% ) ";
  
@@ -409,7 +442,7 @@ void setSummary()
    gSum += vDataSep + DoubleToStr(gTimeQrEP + gTimeQrLP, 2) + " " + gCurrency;
    if      (gTimeQrEP + gTimeQrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good scalping strategy )"; }
    else if (gTimeQrEP + gTimeQrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad scalping strategy )"; }
-   else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+   else                                { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All quick orders.";
    
    // Day trading
@@ -444,7 +477,7 @@ void setSummary()
    gSum += vDataSep + DoubleToStr(gTimeDTrEP + gTimeDTrLP, 2) + " " + gCurrency;
    if      (gTimeDTrEP + gTimeDTrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good day-trading strategy )"; }
    else if (gTimeDTrEP + gTimeDTrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad day-trading strategy )"; }
-   else                              { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+   else                                  { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All day-trading orders.";
       
    // Investing
@@ -479,7 +512,7 @@ void setSummary()
    gSum += vDataSep + DoubleToStr(gTimeIrEP + gTimeIrLP, 2) + " " + gCurrency;
    if      (gTimeIrEP + gTimeIrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good long-term strategy )"; } 
    else if (gTimeIrEP + gTimeIrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad long-term strategy )"; }
-   else                                      { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+   else                                { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All long-term orders.";
 
    if (gHadOpenFeature) 
@@ -516,9 +549,8 @@ void setSummary()
       gSum += vDataSep + DoubleToStr(gTypeHrEP + gTypeHrLP, 2) + " " + gCurrency;
       if      (gTypeHrEP + gTypeHrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good hedging strategy )"; } 
       else if (gTypeHrEP + gTypeHrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad hedging strategy )"; }
-      else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+      else                                { gSum += vDataSep + ""; gSum += vDataSep + ""; }
       gSum += vDataSep + "All hedging orders.";
-
 
       // pending stop
 
@@ -587,7 +619,7 @@ void setSummary()
       gSum += vDataSep + DoubleToStr(gTypePLrEP + gTypePLrLP, 2) + " " + gCurrency;
       if      (gTypePLrEP + gTypePLrLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good pending limit strategy )"; } 
       else if (gTypePLrEP + gTypePLrLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad pending limit strategy )"; }
-      else                                    { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+      else                                  { gSum += vDataSep + ""; gSum += vDataSep + ""; }
       gSum += vDataSep + "All pending limit orders.";
 
       // instant orders
@@ -662,20 +694,20 @@ void setSummary()
    gSum += vDataSep + "All orders closed by trader with set SL or TP.";
    
    gSum += vDataSep + "+";
-   gSum += vDataSep + DoubleToStr(gNotSet, 0);
-   gSum += vDataSep + DoubleToStr((gNotSet / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gNotSetP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gNTPSL, 0);
+   gSum += vDataSep + DoubleToStr((gNTPSL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gNTPSLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "";
    gSum += vDataSep + "All orders closed by trader without SL or TP.";
    
    gSum += vDataSep + "=";
-   gSum += vDataSep + DoubleToStr((gActivated - gBrokerClosed), 0);
-   gSum += vDataSep + DoubleToStr(((gActivated - gBrokerClosed) / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr((gActivatedP - gBrokerClosedP), 2) + " " + gCurrency;
-   if      (gActivatedP - gBrokerClosedP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good trader strategy )"; } 
-   else if (gActivatedP - gBrokerClosedP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad trader strategy )"; }
-   else                                       { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+   gSum += vDataSep + DoubleToStr((gActivated - gClosedB), 0);
+   gSum += vDataSep + DoubleToStr(((gActivated - gClosedB) / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr((gActivatedP - gClosedBP), 2) + " " + gCurrency;
+   if      (gActivatedP - gClosedBP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good trader strategy )"; } 
+   else if (gActivatedP - gClosedBP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad trader strategy )"; }
+   else                                  { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All orders closed by trader.";
    
    // Closed by broker
@@ -713,9 +745,9 @@ void setSummary()
    gSum += vDataSep + "All orders closed by broker with price slip.";
 
    gSum += vDataSep + "=";
-   gSum += vDataSep + DoubleToStr(gBrokerClosed, 0);
-   gSum += vDataSep + DoubleToStr((gBrokerClosed / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gBrokerClosedP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gClosedB, 0);
+   gSum += vDataSep + DoubleToStr((gClosedB / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gClosedBP, 2) + " " + gCurrency;
    if      (gTPEqualP + gSLEqualP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good SL and TP set )"; } 
    else if (gTPEqualP + gSLEqualP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad SL and TP set )"; } 
    else                                { gSum += vDataSep + ""; gSum += vDataSep + ""; } 
@@ -732,17 +764,17 @@ void setSummary()
    gSum += vDataSep + "";
 
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gSet, 0);
-   gSum += vDataSep + DoubleToStr((gSet / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gSetP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gSTPSL, 0);
+   gSum += vDataSep + DoubleToStr((gSTPSL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gSTPSLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( secure strategy )";
    gSum += vDataSep + "All realized orders with SL or TP.";
    
    gSum += vDataSep + "";
-   gSum += vDataSep + DoubleToStr(gNotSet, 0);
-   gSum += vDataSep + DoubleToStr((gNotSet / gActivated) * 100, 1) + " %";
-   gSum += vDataSep + DoubleToStr(gNotSetP, 2) + " " + gCurrency;
+   gSum += vDataSep + DoubleToStr(gNTPSL, 0);
+   gSum += vDataSep + DoubleToStr((gNTPSL / gActivated) * 100, 1) + " %";
+   gSum += vDataSep + DoubleToStr(gNTPSLP, 2) + " " + gCurrency;
    gSum += vDataSep + "-";
    gSum += vDataSep + "( risky strategy )";
    gSum += vDataSep + "All realized orders without SL or TP.";
@@ -751,9 +783,9 @@ void setSummary()
    gSum += vDataSep + DoubleToStr(gActivated, 0);
    gSum += vDataSep + "100 %";
    gSum += vDataSep + DoubleToStr(gActivatedP, 2) + " " + gCurrency;
-   if      (gSetP + gNotSetP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good general approach )"; } 
-   else if (gSetP + gNotSetP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad general approach )"; }
-   else                           { gSum += vDataSep + ""; gSum += vDataSep + ""; }
+   if      (gSTPSLP + gNTPSLP > 0) { gSum += vDataSep + vEarn; gSum += vDataSep + "( good general approach )"; } 
+   else if (gSTPSLP + gNTPSLP < 0) { gSum += vDataSep + vLoss; gSum += vDataSep + "( bad general approach )"; }
+   else                            { gSum += vDataSep + ""; gSum += vDataSep + ""; }
    gSum += vDataSep + "All realized orders ( except cancelled, currently pending or active ).";
 }
 
@@ -1596,9 +1628,9 @@ void getEqual()
 
 void getWithSet() 
 {
-   if (OrderTakeProfit() == 0 && OrderStopLoss() >  0) { gSet++; gSetP += OrderProfit() + OrderSwap(); }
-   if (OrderTakeProfit() >  0 && OrderStopLoss() == 0) { gSet++; gSetP += OrderProfit() + OrderSwap(); }
-   if (OrderTakeProfit() >  0 && OrderStopLoss() >  0) { gSet++; gSetP += OrderProfit() + OrderSwap(); }
+   if (OrderTakeProfit() == 0 && OrderStopLoss() >  0) { gSTPSL++; gSTPSLP += OrderProfit() + OrderSwap(); }
+   if (OrderTakeProfit() >  0 && OrderStopLoss() == 0) { gSTPSL++; gSTPSLP += OrderProfit() + OrderSwap(); }
+   if (OrderTakeProfit() >  0 && OrderStopLoss() >  0) { gSTPSL++; gSTPSLP += OrderProfit() + OrderSwap(); }
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -1607,7 +1639,7 @@ void getWithSet()
 
 void getWithNotSet() 
 {
-   if (OrderTakeProfit() == 0 && OrderStopLoss() == 0) { gNotSet++; gNotSetP += OrderProfit() + OrderSwap(); }
+   if (OrderTakeProfit() == 0 && OrderStopLoss() == 0) { gNTPSL++; gNTPSLP += OrderProfit() + OrderSwap(); }
 }
 
 // -----------------------------------------------------------------------------------------------------------------------
@@ -1672,13 +1704,10 @@ void getHedge()
    string k = "", kExt[];
    string vOrderType = "";
    
-   // exit if open feature not available in comment
-   if (!gIsOpenFeature) { return; }
-
-   // set comment
+   if (!gIsOpenFeature) { return; } // exit if open feature not available in comment
+   
    k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
    
-   // set hedge
    vOrderType = (string)kExt[5]; 
    if ( StringFind(vOrderType, "H", 0) != -1 ) 
    {
@@ -1696,13 +1725,10 @@ void getPendingStop()
    string k = "", kExt[];
    string vOrderType = "";
    
-   // exit if open feature not available in comment
-   if (!gIsOpenFeature) { return; }
+   if (!gIsOpenFeature) { return; } // exit if open feature not available in comment
 
-   // set comment
    k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
    
-   // set hedge
    vOrderType = (string)kExt[5]; 
    if ( StringFind(vOrderType, "PS", 0) != -1 ) 
    {
@@ -1720,13 +1746,10 @@ void getPendingLimit()
    string k = "", kExt[];
    string vOrderType = "";
    
-   // exit if open feature not available in comment
-   if (!gIsOpenFeature) { return; }
-
-   // set comment
+   if (!gIsOpenFeature) { return; } // exit if open feature not available in comment
+   
    k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
    
-   // set hedge
    vOrderType = (string)kExt[5]; 
    if ( StringFind(vOrderType, "PL", 0) != -1 ) 
    {
@@ -1744,13 +1767,10 @@ void getInstant()
    string k = "", kExt[];
    string vOrderType = "";
    
-   // exit if open feature not available in comment
-   if (!gIsOpenFeature) { return; }
-
-   // set comment
+   if (!gIsOpenFeature) { return; } // exit if open feature not available in comment
+   
    k = OrderComment(); StringSplit(k, StringGetCharacter(":",0), kExt);
    
-   // set hedge
    vOrderType = (string)kExt[5]; 
    if ( StringFind(vOrderType, "I", 0) != -1 ) 
    {
@@ -1770,9 +1790,8 @@ void getOpenSlip()
    double vOSlipV = 0;
    string k = OrderComment();
 
-   // exit if open feature not available in comment
-   if (!gIsOpenFeature) { return; }
-
+   if (!gIsOpenFeature) { return; } // exit if open feature not available in comment
+   
    if (OrderOpenPrice() != gOpenReq)
    {
       // there is open slip
@@ -1948,8 +1967,8 @@ void getByBroker()
    string k = OrderComment(); 
    if (StringFind(k, "[tp]", 0) != -1 || StringFind(k, "[sl]", 0) != -1) 
    { 
-      gBrokerClosed++; 
-      gBrokerClosedP += OrderProfit() + OrderSwap(); 
+      gClosedB++; 
+      gClosedBP += OrderProfit() + OrderSwap(); 
    }
 }
 
