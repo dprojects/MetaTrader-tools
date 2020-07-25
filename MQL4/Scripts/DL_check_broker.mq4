@@ -24,14 +24,14 @@
 // SETTINGS
 // -----------------------------------------------------------------------------------------------------------------------
 
-bool sHTML     = true;                                                        // generate HTML output
-bool sCSV      = true;                                                        // generate CSV output
+bool   sHTML = true;    // generate HTML output
+bool   sCSV  = true;    // generate CSV output
 
-string sSep    = ";";                                                         // CSV entry separator, for converters
+string sSep  = ";";     // CSV entry separator, for converters
 
 // for console log
-string sCol    = " | ";                                                       // left padding
-string sLine   = sCol +
+string sCol  = " | ";   // left padding
+string sLine = sCol +
                         "--------------------------------------------------------------------------------" +
                         "--------------------------------------------------------------------------------" +
                         "--------------------------------------------------------------------------------";
@@ -40,88 +40,164 @@ string sLine   = sCol +
 // GLOBALS
 // -----------------------------------------------------------------------------------------------------------------------
 
-// counters - open slip 
-double gOSCBH = 0;        // Open Slip Closed by Broker with Honest return points
-double gOSCBE = 0;        // Open Slip Closed by Broker with Earn return points
-double gOSCBL = 0;        // Open Slip Closed by Broker with Loss return points
+// Open Slip Closed by Broker
 
-double gOSCTE = 0;        // Open Slip Closed by Trader with Earn return points
-double gOSCTL = 0;        // Open Slip Closed by Trader with Loss return points
+double gOSCBH = 0;       // Honest return points
+double gOSCBHP = 0;      // Profit
 
-double gOSA = 0;          // Open Slip All
+double gOSCBE = 0;       // Earn return points
+double gOSCBEP = 0;      // Profit
+double gOSCBEV = 0;      // points Value
 
-// counters - close slip
-double gBigTPB = 0;       // close slip with Bigger Take Profit by Broker (good)
-double gCutSLB = 0;       // close slip with Cut Stop Loss by Broker (good)
+double gOSCBL = 0;       // Loss return points
+double gOSCBLP = 0;      // Profit
+double gOSCBLV = 0;      // points Value
 
-double gCutTPB = 0;       // close slip with Cut Take Profit by Broker (bad)
-double gBigSLB = 0;       // close slip with Bigger Stop Loss by Broker (bad)
+// Open Slip Closed by Trader
 
-double gCloseSlip = 0;    // all orders with Close price Slip
-double gClosedB = 0;      // all orders Closed by Broker
+double gOSCTE = 0;       // Earn return points
+double gOSCTEP = 0;      // Profit
+double gOSCTEV = 0;      // points Value
 
-// counters - closed by trader
-double gCutTPT = 0;       // orders with Cut Take Profit by Trader (trader closed earlier and make possible loss)
-double gCutSLT = 0;       // orders with Cut Stop Loss by Trader (trader closed earlier and make possible profit)
+double gOSCTL = 0;       // Loss return points
+double gOSCTLP = 0;      // Profit
+double gOSCTLV = 0;      // points Value
 
-// counters - related to time
-double gTimeQrE = 0;      // Time Quick with result Earn
-double gTimeQrL = 0;      // Time Quick with result Loss
-double gTimeDTrE = 0;     // Time Day-Trade with result Earn
-double gTimeDTrL = 0;     // Time Day-Trade with result Loss
-double gTimeIrE = 0;      // Time Invest with result Earn
-double gTimeIrL = 0;      // Time Invest with result Loss
+// Open Slip
 
-// counters - related to order type
-double gTypeHrE = 0;      // orders with Type Hedge and with result Earn
-double gTypeHrL = 0;      // orders with Type Hedge and with result Loss
-double gTypePSrE = 0;     // orders with Type Pending Stop and with result Earn
-double gTypePSrL = 0;     // orders with Type Pending stop and with result Loss
-double gTypePLrE = 0;     // orders with Type Pending Limit and with result Earn
-double gTypePLrL = 0;     // orders with Type Pending Limit and with result Loss
-double gTypeIrE = 0;      // orders with Type Instant execution and with result Earn
-double gTypeIrL = 0;      // orders with Type Instant execution and with result Loss
+double gOSA = 0;         // All
+double gOSAP = 0;        // Profit
+double gOSAV = 0;        // points Value
 
-// counters - other stats
-double gSLEqual = 0;      // orders with Stop Loss price Equal closed price (no slip at the end of order)
-double gTPEqual = 0;      // orders with Take Profit price Equal closed price (no slip at the end of order)
-double gSTPSL = 0;        // orders with Set TP or SL
-double gNTPSL = 0;        // orders with Not set TP or SL
-double gActivated = 0;    // all orders
+// close slip
 
-// same meaning as counters but with profit calculation
-double gOSCBHP = 0, gOSCBEP = 0, gOSCBLP = 0, gOSCBAP = 0;
-double gOSCTEP = 0, gOSCTLP = 0, gOSCTAP = 0;
-double gOSAP = 0;
-double gBigTPBP = 0, gBigSLBP = 0, gCutTPBP = 0, gCutSLBP = 0;
-double gTimeQrEP = 0, gTimeDTrEP = 0, gTimeIrEP = 0;
-double gTimeQrLP = 0, gTimeDTrLP = 0, gTimeIrLP = 0;
-double gTypeHrEP = 0, gTypePSrEP = 0, gTypePLrEP = 0, gTypeIrEP = 0;
-double gTypeHrLP = 0, gTypePSrLP = 0, gTypePLrLP = 0, gTypeIrLP = 0;
-double gCutTPTP = 0, gCutSLTP = 0;
-double gSLEqualP = 0, gTPEqualP = 0, gCloseSlipP = 0, gClosedBP = 0; 
-double gSTPSLP = 0, gNTPSLP = 0, gActivatedP = 0;
+double gBigTPB = 0;      // Bigger Take Profit closed by Broker (good)
+double gBigTPBP = 0;     // Profit
+double gBigTPBV = 0;     // points Value
 
-// same meaning as counters but with diff points value calculation
-double gOSCBEV = 0, gOSCBLV = 0, gOSCBAV = 0;
-double gOSCTEV = 0, gOSCTLV = 0, gOSCTAV = 0;
-double gOSAV = 0;
-double gBigTPBV = 0, gBigSLBV = 0, gCutTPBV = 0, gCutSLBV = 0;
+double gCutSLB = 0;      // Cut Stop Loss closed by Broker (good)
+double gCutSLBP = 0;     // Profit
+double gCutSLBV = 0;     // points Value
+
+double gCutTPB = 0;      // Cut Take Profit closed by Broker (bad)
+double gCutTPBP = 0;     // Profit
+double gCutTPBV = 0;     // points Value
+
+double gBigSLB = 0;      // Bigger Stop Loss closed by Broker (bad)
+double gBigSLBP = 0;     // Profit
+double gBigSLBV = 0;     // points Value
+
+// all orders
+
+double gCloseSlip = 0;   // Close price Slip
+double gCloseSlipP = 0;  // Profit
+
+double gClosedB = 0;     // Closed by Broker
+double gClosedBP = 0;    // Profit
+
+// closed by trader
+
+double gCutTPT = 0;      // Cut Take Profit closed by Trader (trader closed earlier and make possible loss)
+double gCutTPTP = 0;     // Profit
+
+double gCutSLT = 0;      // Cut Stop Loss closed by Trader (trader closed earlier and make possible profit)
+double gCutSLTP = 0;     // Profit
+
+// related to order time
+
+double gTimeQrE = 0;     // Time Quick with result Earn
+double gTimeQrEP = 0;    // Profit
+
+double gTimeQrL = 0;     // Time Quick with result Loss
+double gTimeQrLP = 0;    // Profit
+
+double gTimeDTrE = 0;    // Time Day-Trade with result Earn
+double gTimeDTrEP = 0;   // Profit
+
+double gTimeDTrL = 0;    // Time Day-Trade with result Loss
+double gTimeDTrLP = 0;   // Profit
+
+double gTimeIrE = 0;     // Time Invest with result Earn
+double gTimeIrEP = 0;    // Profit
+
+double gTimeIrL = 0;     // Time Invest with result Loss
+double gTimeIrLP = 0;    // Profit
+
+// related to order type
+
+double gTypeHrE = 0;     // Type Hedge and with result Earn 
+double gTypeHrEP = 0;    // Profit
+
+double gTypeHrL = 0;     // Type Hedge and with result Loss 
+double gTypeHrLP = 0;    // Profit
+
+double gTypePSrE = 0;    // Type Pending Stop and with result Earn 
+double gTypePSrEP = 0;   // Profit
+
+double gTypePSrL = 0;    // Type Pending stop and with result Loss 
+double gTypePSrLP = 0;   // Profit
+
+double gTypePLrE = 0;    // Type Pending Limit and with result Earn 
+double gTypePLrEP = 0;   // Profit
+
+double gTypePLrL = 0;    // Type Pending Limit and with result Loss 
+double gTypePLrLP = 0;   // Profit
+
+double gTypeIrE = 0;     // Type Instant execution and with result Earn 
+double gTypeIrEP = 0;    // Profit
+
+double gTypeIrL = 0;     // Type Instant execution and with result Loss
+double gTypeIrLP = 0;    // Profit
+
+// other stats
+
+double gSLEqual = 0;     // Stop Loss and Equal closed price (no slip at the end of order)
+double gSLEqualP = 0;    // Profit
+
+double gTPEqual = 0;     // Take Profit and Equal closed price (no slip at the end of order)
+double gTPEqualP = 0;    // Profit
+
+double gSTPSL = 0;       // orders with Set TP or SL
+double gSTPSLP = 0;      // Profit
+
+double gNTPSL = 0;       // orders with Not set TP or SL
+double gNTPSLP = 0;      // Profit
+
+// all orders
+
+double gActivated = 0;   // Activated
+double gActivatedP = 0;  // Profit
 
 // switches
+
 int    gShow = 0;
-bool   gHadOpenFeature = false, gIsOpenFeature = false;
+bool   gHadOpenFeature = false;
+bool   gIsOpenFeature = false;
 
 // calculation
-double gPoint = 0, gOpenReq = 0, gPointVal = 0, gOSlip = 0, gOSlipAbs = 0;
+
+double gPoint = 0;
+double gOpenReq = 0;
+double gPointVal = 0;
+double gOSlip = 0;
+double gOSlipAbs = 0;
 string gCurrency = AccountCurrency();
 
 // content
-string gHTML = "", gHTMLe = "", gHTMLeq = "";
-string gCSV = "", gCSVe = "", gCSVeq = "";
+
+string gHTML = "";
+string gHTMLe = "";
+string gHTMLeq = "";
+
+string gCSV = "";
+string gCSVe = "";
+string gCSVeq = "";
 
 // summary
-string gIssue = "", gSum = "", gOpenInfo  = "";
+
+string gIssue = "";
+string gSum = "";
+string gOpenInfo  = "";
 
 // -----------------------------------------------------------------------------------------------------------------------
 // Set global variables
