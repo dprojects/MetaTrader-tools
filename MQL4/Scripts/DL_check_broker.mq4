@@ -272,8 +272,8 @@ void setSummary()
    // Calculate final ratio
    if (gHadOpenFeature) 
    {
-      vRatioA =    gOSCBH + gOSCBE + gTPEqual + gSLEqual + gOSCBL;
-      vRatioG = ( (gOSCBH + gOSCBE + gTPEqual + gSLEqual) / vRatioA ) * 100;
+      vRatioA = gOSCBH + gOSCBE + gTPEqual + gSLEqual + gOSCBL;
+      if (vRatioA != 0) { vRatioG = ( (gOSCBH + gOSCBE + gTPEqual + gSLEqual) / vRatioA ) * 100; }
 
       gOSA  = gOSCBE  + gOSCBL  + gOSCTE  + gOSCTL;
       gOSAP = gOSCBEP + gOSCBLP + gOSCTEP + gOSCTLP;
@@ -281,8 +281,8 @@ void setSummary()
    }
    else
    {
-      vRatioA =    gBigTPB + gCutSLB + gTPEqual + gSLEqual + gBigSLB + gCutTPB;
-      vRatioG = ( (gBigTPB + gCutSLB + gTPEqual + gSLEqual) / vRatioA ) * 100;
+      vRatioA = gBigTPB + gCutSLB + gTPEqual + gSLEqual + gBigSLB + gCutTPB;
+      if (vRatioA != 0) { vRatioG = ( (gBigTPB + gCutSLB + gTPEqual + gSLEqual) / vRatioA ) * 100; }
 
       vCloseSlips  = gBigTPB  + gCutSLB  + gBigSLB  + gCutTPB;
       vCloseSlipsP = gBigTPBP + gCutSLBP + gBigSLBP + gCutTPBP;
@@ -295,8 +295,9 @@ void setSummary()
    else if (vRatioG > 80) { vR += "VERY GOOD"; } 
    else if (vRatioG > 50) { vR += "GOOD"; }
    else if (vRatioG > 20) { vR += "BAD"; }
-   else                   { vR += "VERY BAD"; }
- 
+   else if (vRatioG >  0) { vR += "VERY BAD"; }
+   else                   { vR += "BROKER NOT INVOLVED"; }
+
    // Summary
 
    gSum += "Final result for Broker: " + vR;
